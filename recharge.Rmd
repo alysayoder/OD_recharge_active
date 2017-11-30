@@ -28,6 +28,15 @@ high <- read.csv('R_input_high_1617.csv')
 coordinates(high) <- ~ long + lat
 coordinates(low) <- ~ long + lat
 ```
+## Oneto-Denier Field Site, Sacramento County, CA
+```{r}
+krige1617@crs <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
+leaflet() %>% addTiles %>% 
+  setView(lng = -71.0589, lat = 42.3601, zoom = 12)
+  addProviderTiles(providers$OpenTopoMap)
+
+```
 
 ## Plots of Maximum and Minimum Surface Water Levels
 Shows locations of monitoring wells at the Oneto-Denier field site. Marker size increases with magnitude of surface water level (meters). 
