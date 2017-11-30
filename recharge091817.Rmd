@@ -1,0 +1,366 @@
+---
+title: "Oneto-Denier Recharge Estimates for the 2016-17 Water Year"
+output: 
+  html_document:
+    code_folding: hide
+    toc: TRUE
+    toc_float: TRUE
+author: Amy Yoder
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+```{r, message = FALSE, warning = FALSE, results = "hide", echo=FALSE}
+# setwd()
+setwd("~/GitHub/OD_recharge")
+
+# load packages
+packagelist = list("ggplot2", "colorspace", "reshape2", "tidyverse", "knitr", "sp", 
+                   "rgdal", "raster", "gstat", "dismo", "spMC", "formatR", "dplyr", "magrittr")
+lapply(packagelist, library, character.only = TRUE)
+
+# read in data frames, convert to SPDF
+low <- read.csv("R_input_low_1617.csv")
+high <- read.csv('R_input_high_1617.csv')
+coordinates(high) <- ~ long + lat
+coordinates(low) <- ~ long + lat
+```
+
+## Min & Max Surface Water Levels
+Shows locations of monitoring wells at the Oneto-Denier field site. Marker size increases with magnitude of surface water level (meters). 
+```{r, tidy=TRUE}
+# plot surface water levels
+
+low %>% as.data.frame %>% 
+  ggplot(aes(long, lat)) + geom_point(aes(size=levellow), color="blue", alpha=3/4) + 
+  ggtitle("Lowest Surface Water Level (m)") + coord_equal() + theme_bw()
+
+high %>% as.data.frame %>% 
+  ggplot(aes(long, lat)) + geom_point(aes(size=levelhigh), color="blue", alpha=3/4) + 
+  ggtitle("Highest Surface Water Level (m)") + coord_equal() + theme_bw()
+
+```
+
+## Kriged Recharge Estimates
+Using ordinary kriging.
+```{r}
+suppressPackageStartupMessages({
+  library(gstat)
+})
+x <- seq(from=min(high$lat), to=max(high$lat), by=(max(high$lat)-min(high$lat))/6)
+y <- seq(from=min(high$long), to=max(high$long), by=(max(high$long)-min(high$long))/6)
+# krige low----
+
+# variograms
+#low
+lzn.vgm <- variogram(log(low$levellow*-1)~1, low) # calculate sample variogram values
+lzn.fit <- fit.variogram(lzn.vgm, model=vgm(psill = 10, "Sph", range = NA, kappa = 0.5)) # fit model
+plot(lzn.vgm, lzn.fit, main='Variogram for Low Water Levels')
+#high
+h.vgm <- variogram(log(high$levelhigh)~1, data = high) 
+h.fit <- fit.variogram(h.vgm, model=vgm(psill = .1, "Lin", range = NA))
+plot(h.vgm, h.fit, main='Variogram for High Water Levels')
+
+# load spatial domain to interpolate over
+grid <- raster(low, ncols=100, nrows=100)
+g<-as(grid, 'SpatialGrid')
+
+# krige low
+k <- gstat(formula = low$levellow~1, locations = low, model = lzn.fit)
+kriged <- predict(k,g)
+plot(kriged, main='Lowest SWL(m) of the 2016-17 Water Year, Kriged', axes=TRUE)
+plot(low, add = T)
+
+# krige high
+kh <- gstat(formula = high$levelhigh~1, locations = high, model = h.fit)
+krigedh <- predict(kh, g)
+plot(krigedh, main='Highest SWL(m) of the 2016-17 Water Year, Kriged', axes=TRUE)
+plot(high, add = T)
+
+# krige difference----
+rash <- raster(krigedh)
+rasl <- raster(kriged)
+krige1617 <- rash-rasl
+par(mfrow=c(1,1))
+plot(krige1617, col = rainbow(100), main = expression("2016-17 Wet-Season Cumulative "*Delta*" Head(m) w/Kriging"), 
+     alpha = .5, axes=TRUE)
+plot(high, add = T)
+
+# krige recharge estimate----
+ac_per_cell <- 1136/10000
+krige1617feet <- krige1617*3.28084
+sum_krige_ft <- cellStats(krige1617feet, 'sum')
+krig_rech1617_acft <- sum_krige_ft*ac_per_cell
+
+```
+
+## IDW Recharge Estimates
+Recharge estimates calculated with inverse distance weighting
+```{r}
+library(gstat)
+library(dplyr)
+library(ggplot2)
+# idw high----
+
+hi <- gstat(formula = high$levelhigh~1, locations = high, nmax=8, set=list(idp=2))
+idw_h <- interpolate(grid, hi)
+plot(idw_h, main = 'Highest SWL(m)')
+plot(high, add=T)
+
+# idw low ----
+gs<-gstat(formula = low$levellow~1, locations = low, nmax=8, set=list(idp=2))
+idw<-interpolate(grid, gs)
+plot(idw, main = 'Lowest SWL (m)')
+plot(low, add=T)
+# inverse distance weighting difference----
+idw1617 <- idw_h - idw
+
+plot(idw1617, main = expression("2016-17 Wet-Season Cumulative "*Delta*" Head(m)"), col = rainbow(100), alpha = 0.5)
+plot(high, add=T)
+
+# idw recharge estimate----
+idw1617feet <- idw1617*3.28084
+ac_per_cell <- 1136/10000
+sum_idw_ft <- cellStats(idw1617feet, 'sum')
+rech1617_acft <- sum_idw_ft*ac_per_cell
+
+# 1/30/17 - 2/16/17 Flood Event Recharge
+l_ev <- as.data.frame(read.csv('event1_low.csv'))
+h_ev <- as.data.frame(read.csv('event1_high.csv'))
+# convert to SPDFs
+coordinates(h_ev) <- ~ long + lat
+coordinates(l_ev) <- ~ long + lat
+
+
+# load spatial domain to interpolate over
+grid2 <- raster(l_ev, ncols=100, nrows=100)
+# interpolate highs
+hi2 <- gstat(formula = h_ev$hlevel~1, locations = h_ev, nmax = 8, set=list(idp=2))
+ev_idw_h <- interpolate(grid2, hi2)
+# interpolate lows
+lo2 <- gstat(formula = l_ev$llevel~1, locations = l_ev, nmax = 8, set = list(idp=2))
+ev_idw_l <- interpolate(grid2, lo2)
+# high idw - low idw
+idw_event <- ev_idw_h - ev_idw_l
+plot(idw_event)
+# calculate event recharge volume 1/30/17-2/16/17
+idw_event_ft <- idw_event*3.28084
+ac_per_cell <- 1136/10000
+sum_idw_event_ft <- cellStats(idw_event_ft, 'sum')
+rech_event_acft <- sum_idw_event_ft*ac_per_cell
+# multiply rech_event_acft by specific yield, calculate acft/ac
+
+
+# import outline of boundary, as a set of points in lat/long that we generated in ArcMap as a digitized polyline
+bound <- read.csv("bound_table.csv", stringsAsFactors = FALSE, header = TRUE)
+bound_pts <- bound[,c(4,5)]
+colnames(bound_pts) <- c('x', 'y')
+
+# convert raster to SPDF, or at least get some coords
+idwevent_pts <- coordinates(idw_event)[!is.na(values(idw_event)),]
+colnames(idwevent_pts) <- c('x', 'y')
+
+# clip event idw by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw_event) %>% as.data.frame()
+idwevent_clip <- temp[inout(idwevent_pts, bound_pts), ]
+colnames(idwevent_clip) <- c('x','y','z')
+
+# plot idwevent_clip as a heatmap
+library(viridis)
+library(magrittr)
+idwevent_clip %>% 
+  ggplot() +
+  geom_tile(aes(x,y, fill = z)) +
+  coord_fixed(1) +
+  scale_fill_viridis(name="Event Recharged Head (m)") +
+  theme_void()
+
+coordinates(idwevent_clip) <- ~ x + y
+gridded(idwevent_clip) <- TRUE
+idwevent_rast <- raster(idwevent_clip, "z")
+plot(idwevent_rast)
+# export tif to use for plotting
+writeRaster(idwevent_rast, "/Users/ayoder/Desktop/finalevent3.GTiff", format = "GTiff")
+
+amyraster<-raster("/Users/ayoder/Desktop/finalevent.tif", ncols=1000,nrows=1000)
+```
+
+## Map of the Oneto-Denier Field Site
+Generated with ggmap. 
+```{r}
+suppressPackageStartupMessages({
+  library(ggmap)
+})
+b <- bbox(low)
+(OD_map <- ggmap(get_map(location = b))) #download map for Oneto-Denier 
+```
+
+## 2016-17 Recharge Estimate Ineractive Plots
+Kriged and inverse distance weighted recharge estimates overlaid on basemaps. Mouse over markers to see monitoring well ID. 
+```{r}
+# add basemap w/leaflet
+suppressPackageStartupMessages({
+  library(raster)
+  library(leaflet)
+  library(dplyr)
+  library(htmltools)
+})
+MW_label <- read.csv('MW_label.csv')
+# idw
+idw1617@crs <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+pal <- colorNumeric(c("#9e0142", "#d53e4f", "#f46d43", "#fdae61", "#fee08b", "#e6f598", "#abdda4", 
+"#66c2a5", "#3288bd", "#5e4fa2"), values(krige1617), na.color = "transparent")
+pal2 <- colorNumeric(c("#9e0142", "#d53e4f", "#f46d43", "#fdae61", "#fee08b", "#e6f598", "#abdda4", 
+"#66c2a5", "#3288bd", "#5e4fa2"), values(idw1617), na.color = "transparent")
+
+leaflet() %>% addTiles %>% 
+  addProviderTiles(providers$OpenTopoMap) %>% 
+  addRasterImage(idw1617, colors = pal2, opacity = 0.85) %>%
+  addLegend(pal=pal2, values = values(idw1617), title = "IDW Recharge Estimates 2016-17(m)")%>%   
+  addCircleMarkers(data = MW_label, radius = 2, popup = ~as.character(name), label = ~as.character(name), labelOptions =   labelOptions(noHide=T, textOnly = T)) %>%
+  addScaleBar(position=c("bottomright"))
+
+# krig
+krige1617@crs <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
+leaflet() %>% addTiles %>% 
+  addProviderTiles(providers$OpenTopoMap) %>% 
+  addRasterImage(krige1617, colors = pal, opacity = 0.85) %>%
+  #addLegend(pal=pal, values = values(krige1617), title = "Kriged Recharge Estimates 2016-17 (m)") %>%
+  addMarkers(data = MW_label, popup = ~as.character(name), label = ~as.character(name),  labelOptions = labelOptions(noHide=T, textOnly = T)) %>%
+  addScaleBar(position=c("bottomright"))
+```
+
+## Results
+
+The recharge estimate found using kriging was **5401 +/- 1351** acre feet or **4.8 +/- 1.2** acre feet per acre. The recharge estimate found using inverse distance weighting was **5820 +/- 1455** acre feet per acre or **5.1 +/- 1.3** acre feet per acre. 
+
+These values represents change in Oneto-Denier groundwater volume from the time at which groundwater level was lowest to the time it was highest. These estimations do not consider seepage due to groundwater presence over time. 
+```{r}
+
+```
+
+## Oneto-Denier Field Site
+```{r}
+library(sp)
+library(magrittr)
+library(leaflet)
+krige1617@crs <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
+leaflet() %>%  setView(lng = -121.38043, lat = 38.30191, zoom = 14) %>% 
+  addTiles() %>% 
+  addCircleMarkers(data = MW_label, radius = 2, 
+                   color = "black", 
+                   popup = ~as.character(name), 
+                   label = ~as.character(name),
+                   labelOptions = labelOptions(noHide=T)) %>% 
+  addProviderTiles(providers$HERE.terrainDayMobile) %>%
+  addScaleBar(position=c("topright"))
+  
+```
+
+## Groundwater Observatory Extent
+```{r}
+krige1617@crs <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
+GO_OD_label <- read.csv('GO_label_ODonly.csv')
+GO_label <- read.csv('GO_label.csv')
+samer <- read.csv('ohwd_samer.csv')
+
+map <- leaflet() %>%  fitBounds(lng1 = -121.764809, lat1 = 38.227236, lng2 = -121.022671, lat2 = 38.595049) %>% 
+  addTiles() %>% 
+  addCircleMarkers(data = GO_label, popup = ~as.character(name), radius = 4, color = "black", label = ~as.character(name)) %>% 
+  addCircleMarkers(data = GO_OD_label, popup = ~as.character(name), radius = 4, color = "black", label = ~as.character(name)) %>%
+  addCircleMarkers(data = samer, popup = ~as.character(name), radius = 4, color = "black", label = ~as.character(name)) %>% 
+  addProviderTiles(providers$Hydda.Full) %>%
+  addScaleBar(position = c('topright'))
+map
+
+```
+
+## Clip IDW to Inundation Extent
+```{r}
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(raster)
+# import outline of boundary, as a set of points in lat/long that we generated in ArcMap as a digitized polyline
+bound <- read.csv("bound_table.csv", stringsAsFactors = FALSE, header = TRUE)
+bound_pts <- bound[,c(4,5)]
+colnames(bound_pts) <- c('x', 'y')
+
+# convert raster to SPDF, or at least get some coords
+idw1617_pts <- coordinates(idw1617)[!is.na(values(idw1617)),]
+colnames(idw1617_pts) <- c('x', 'y')
+
+# clip idw_h by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw1617) %>% as.data.frame()
+idw1617_clip <- temp[inout(idw1617_pts, bound_pts), ]
+colnames(idw1617_clip) <- c('x','y','z')
+
+# plot idw_h_clip as a heatmap
+library(viridis)
+library(magrittr)
+idw1617_clip %>% 
+  ggplot() +
+  geom_tile(aes(x,y, fill = z)) +
+  coord_fixed(1.3) +
+  scale_fill_viridis(name="Recharged Head (m)") +
+  theme_void()
+# plot trimmed idw on ggmap
+library(ggmap)
+b <- bbox(low)
+
+ ggplot(idw1617_clip) + 
+ geom_tile(aes(x,y, fill = z)) +
+  coord_fixed(1) +
+  scale_fill_viridis(name="Recharged Head (m)") +
+  theme_void() 
+ 
+```
+
+## Add basemap to trimmed flood recharge estimate figure
+```{r}
+# add basemap w/leaflet
+suppressPackageStartupMessages({
+  library(raster)
+  library(leaflet)
+  library(dplyr)
+  library(htmltools)
+})
+MW_label <- read.csv('MW_label.csv')
+
+# idw
+pal <- colorNumeric(c("#9e0142", "#d53e4f", "#f46d43", "#fdae61", "#fee08b", "#e6f598", "#abdda4", 
+"#66c2a5", "#3288bd", "#5e4fa2"), values(krige1617), na.color = "transparent")
+
+#convert data.frame to spatial polygons data frame 
+#coordinates(idw1617_clip) <- ~ x + y
+idw17raster <- raster(idw1617_clip)
+idw17raster@crs <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+pal2 <- colorNumeric(c("#9e0142", "#d53e4f", "#f46d43", "#fdae61", "#fee08b", "#e6f598", "#abdda4", 
+"#66c2a5", "#3288bd", "#5e4fa2"), values(idw17raster@z), na.color = "transparent")
+# add Spatial Polygons Data Frame to leaflet
+leaflet() %>% addTiles %>% 
+  addProviderTiles(providers$OpenTopoMap) %>% 
+  addRasterImage(idw17raster, colors = rainbow, opacity = 0.85) %>%
+  addLegend(pal=pal2, values = values(idw17raster), title = "Event Recharge (m)") %>%
+  addCircleMarkers(data = MW_label, popup = ~as.character(name), color = "black", label = ~as.character(name))
+
+```
+
+## Flood Event Recharge 
+```{r}
+# when event of interest is chosen, replace idw1617_clip with the difference of the high and low gw levels
+idwflood_feet <- idw1617_clip*3.28084
+ac_per_cell <- 1136/10000
+sum_idw_ft <- sum(idw1617_clip$z)
+floodrech1617_acft <- sum_idw_ft*ac_per_cell
+
+```
+
