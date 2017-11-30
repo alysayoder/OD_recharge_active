@@ -1,0 +1,53 @@
+---
+title: "Oneto-Denier Groundwater/Surface Water Interaction"
+author: "Alysa M. Yoder"
+date: "September 15, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## MW-5 Ground Water Elevation (GWE) and Cosumnes River Water Surface Elevation (WSE)
+```{r}
+## load MW5 data
+MW5 <- read.csv("MW-5.csv", header = TRUE, stringsAsFactors = FALSE)
+## format MW5 data
+
+MW5 = MW5[,c(1,3)]
+colnames(MW5) <- c("date", "swl")
+MW5$date <- as.POSIXct(MW5$date, format = '%m/%d/%y %H:%M')
+
+#MW5_1617 <- na.omit(MW5_1617)
+MW5$swl <- as.numeric(MW5$swl)
+MW5_1617 <- filter(MW5, MW5$date >= '2016-01-01 00:00:00')
+## load SWE
+SWE <- read.csv("LWC_All.csv", header = TRUE, stringsAsFactors = FALSE)
+SWE$Timestamp <- as.POSIXct(SWE$Timestamp, format = '%m/%d/%y %H:%M')
+## format SWE data
+SWE <- SWE[,c(1,3)]
+SWE_1617 <- filter(SWE, SWE$Timestamp >= '2016-01-01 00:00:00')
+
+
+## plots
+
+ggplot() +  
+  geom_line(data=MW5_1617, aes(x=MW5_1617$date, y=MW5_1617$swl), colour = "black") +
+  geom_line(data=SWE_1617, aes(x=SWE_1617$Timestamp, y=SWE_1617$WSE_m), colour = "darksalmon") +
+  labs(x="Date", y="Water Level (m)", Title='Oneto-Denier GW Level and Cosumnes River Stage 2016-17')
+
+ggplot() + geom_line(data=SWE_1617, aes(x=SWE_1617$Timestamp, y=SWE_1617$WSE_m), colour = "darksalmon") +
+  labs(x="Date", y="River Stage Elevation (m)", Title='Cosumnes River Stage at Oneto-Denier')
+
+ggplot() + geom_line(data=SWE, aes(x=SWE$Timestamp, y=SWE$WSE_m), colour = "darksalmon") +
+  labs(x="Date", y="River Stage Elevation (m)", Title='Cosumnes River Stage at Oneto-Denier')
+
+ggplot() +  
+  geom_line(data=MW5, aes(x=MW5$date, y=MW5$swl), colour = "black") +
+  geom_line(data=SWE, aes(x=SWE$Timestamp, y=SWE$WSE_m), colour = "darksalmon") +
+  labs(x="Date", y="Water Level (m)", Title='Oneto-Denier GW Level and Cosumnes River Stage') 
+```
+
+
+
