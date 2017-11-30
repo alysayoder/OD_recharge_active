@@ -1,0 +1,116 @@
+---
+title: "Cosumnes River Topography"
+author: "Alysa M. Yoder"
+date: "November 28, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r xtabs}
+library(plotly)
+library(sp)
+library(dplyr)
+packageVersion('plotly')
+csec <- read.csv('CrossSections_2014_2015.csv')
+csec = csec[,c(1:3)]
+names(csec) <- c('x', 'y', 'z')
+tabmat <- xtabs(z~x+y, data=csec, sparse=T)
+plot(tabmat)
+p <- plot_ly(csec, x= ~x, y = ~y, z = tabmat) %>% 
+  add_surface()
+p
+glimpse(csec)
+class(tabmat)
+head(csec)
+glimpse(tabmat)
+head(tabmat)
+
+
+```
+
+##Use unique to create matrix
+```{r unique}
+df <- read.csv('CrossSections_2014_2015.csv')
+df <- df[,c(1:3)]
+out <- matrix(0, nrow=length(unique(df$Northing)), ncol = length(unique(df$Easting)))
+out <- xtabs(df$Northing, df$Easting)
+out[rbind(df$Northing, df$Easting)] <- df$Elevation
+class(out)
+glimpse(out)
+?xtabs
+```
+
+
+## Plot as a Contour Map
+```{r contour}
+library(akima)
+library(lattice)
+csec <- read.csv('CrossSections_2014_2015.csv')
+reggrid <- interp(csec$Easting, csec$Northing, csec$Elevation, linear = T, extrap = F, duplicate = T)
+x.ticks <- round(reggrid$x[seq(1, length(reggrid$x), length = 10)],10)
+y.ticks <- round(reggrid$y[seq(1, length(reggrid$y), length = 10)],10)
+wireframe(reggrid$z, xlab = "Easting", ylab = "Northing", zlab= "Elevation",
+          scales=list(x=list(labels=x.ticks),
+                      y=list(labels=y.ticks),
+                      arrows=FALSE),
+          drape=T, colorkey=T)
+
+#Contour Plot
+p <- plot(csec$Easting, csec$Northing, xlab= 'Easting', ylab= 'Northing')
+image(reggrid, add=T)
+contour(reggrid, add=T)
+
+```
+
+```{r}
+library(plotly)
+kd <- with(MASS::geyser, MASS::kde2d(duration, waiting, n = 50))
+
+kd
+p <- plot_ly(x = kd$x, y = kd$y, z = kd$z) %>% add_surface()
+p
+```
+
+```{r}
+z <- c(
+  c(8.83,8.89,8.81,8.87,8.9,8.87),
+  c(8.89,8.94,8.85,8.94,8.96,8.92),
+  c(8.84,8.9,8.82,8.92,8.93,8.91),
+  c(8.79,8.85,8.79,8.9,8.94,8.92),
+  c(8.79,8.88,8.81,8.9,8.95,8.92),
+  c(8.8,8.82,8.78,8.91,8.94,8.92),
+  c(8.75,8.78,8.77,8.91,8.95,8.92),
+  c(8.8,8.8,8.77,8.91,8.95,8.94),
+  c(8.74,8.81,8.76,8.93,8.98,8.99),
+  c(8.89,8.99,8.92,9.1,9.13,9.11),
+  c(8.97,8.97,8.91,9.09,9.11,9.11),
+  c(9.04,9.08,9.05,9.25,9.28,9.27),
+  c(9,9.01,9,9.2,9.23,9.2),
+  c(8.99,8.99,8.98,9.18,9.2,9.19),
+  c(8.93,8.97,8.97,9.18,9.2,9.18)
+)
+dim(z) <- c(15,6)
+z2 <- z + 1
+z3 <- z - 1
+
+plot <- plot_ly(showscale = FALSE) %>%
+  add_surface(z = ~z) %>%
+  add_surface(z = ~z2, opacity = 0.98) %>%
+  add_surface(z = ~z3, opacity = 0.98)
+plot
+glimpse(z)
+head(z)
+structure(z)
+```
+
+##volcano Example
+```{r}
+library(plotly)
+# volcano is a numeric matrix that ships with R
+plot_ly(z = volcano) %>% add_surface()
+
+```
