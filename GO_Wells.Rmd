@@ -1,0 +1,46 @@
+---
+title: "GW Observatory Wells"
+author: "Alysa M. Yoder"
+date: "October 27, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Groundwater Observatory Wells
+
+```{r, echo = FALSE, message = FALSE}
+library(leaflet)
+od <- read.csv('ohwd_od.csv')
+rech <- read.csv('ohwd_rech.csv')
+other <- read.csv('go_wells.csv')
+
+m <- leaflet() %>% fitBounds(lng1 = -121.39, lat1 = 38.227236, lng2 = -121.022671, lat2 = 38.5599) %>%
+      addTiles() %>%
+      addCircleMarkers(data = od, popup = ~as.character(name), label = ~as.character(name), 
+                       color = 'red', 
+                       radius = 2, weight = 5,              
+                       opacity = 1) %>% #Oneto-Denier
+      addCircleMarkers(data = rech, popup = ~as.character(name), label = ~as.character(name), 
+                       color = 'blue', 
+                       radius = 2, 
+                       weight = 5, 
+                       opacity = 1) %>% #Recharge Project
+    addCircleMarkers(data = other, popup = ~as.character(name), label = ~as.character(name), 
+                       color = 'black', 
+                       radius = 2, 
+                       weight = 5, 
+                       opacity = 1) %>% #Other GO Wells
+      addProviderTiles(providers$Esri.WorldImagery) %>%
+      addScaleBar(position = c("topright")) %>%
+      addLegend(position = c("bottomright"), colors = c('red', 'blue', 'black'), labels = c('Oneto-Denier', 
+                                                                                            'Recharge Project',
+                                                                                            'Available GO Wells'),
+                title = 'Well Category')
+
+m
+
+```
+
