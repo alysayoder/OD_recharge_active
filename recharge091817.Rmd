@@ -186,7 +186,7 @@ plot(idwevent_rast)
 # export tif to use for plotting
 writeRaster(idwevent_rast, "/Users/ayoder/Desktop/finalevent3.GTiff", format = "GTiff")
 
-amyraster<-raster("/Users/ayoder/Desktop/finalevent.tif", ncols=1000,nrows=1000)
+amyraster<-raster("/Users/ayoder/Desktop/finalevent3.tif", ncols=1000,nrows=1000)
 ```
 
 ## Map of the Oneto-Denier Field Site
