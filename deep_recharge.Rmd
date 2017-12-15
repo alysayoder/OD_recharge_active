@@ -1,0 +1,556 @@
+---
+title: "Deep Recharge"
+author: "Alysa M. Yoder"
+date: "December 5, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(splancs)
+library(magrittr)
+library(viridis)
+library(gstat)
+```
+
+## Create hydrograph consisting of average of all groundwater elevations
+
+```{r avg hydrograph}
+df <- read.csv('df_manual_allGWE1617.csv')
+df <- df[c(1:35040),]
+wy <- seq(1:35040)
+avgGWE <- df[,-c(1:14)]
+avgyr <- data.frame(cbind(wy,avgGWE))
+
+p <- ggplot() + geom_line(data=avgyr, aes(x=wy, y=avgGWE), colour = "darksalmon") +
+  labs(x="Sample ID", y="Groundwater Elevation (m)")
+
+pdf(file = "1617_avg_GWE.pdf", paper = "special", width = 11, height = 8.5, onefile = TRUE)
+p
+dev.off()
+```
+
+## Calculate recharge for each event 
+
+```{r event rech, echo=FALSE}
+
+# The cell size is currently 15.9 by 15.9
+# The total area of the area is 295 acres 
+
+# Event 1----
+l1 <- as.data.frame(read.csv('ev1l.csv'))
+h1 <- as.data.frame(read.csv('ev1h.csv'))
+# convert to SPDFs
+coordinates(l1) <- ~ long + lat
+coordinates(h1) <- ~ long + lat
+
+# load spatial domain to interpolate over
+grid <- raster(l1, ncols=100, nrows=100)
+# interpolate lows
+lo1 <- gstat(formula = l1$l~1, locations = l1, nmax = 8, set = list(idp=2))
+ev1_idw_l <- interpolate(grid, lo1)
+# interpolate highs
+hi1 <- gstat(formula = h1$h~1, locations = h1, nmax = 8, set=list(idp=2))
+ev1_idw_h <- interpolate(grid, hi1)
+
+# high idw - low idw
+idw_event1 <- ev1_idw_h - ev1_idw_l
+plot(idw_event1)
+
+# import outline of boundary, as a set of points in lat/long that we generated in ArcMap as a digitized polyline
+bound <- read.csv("bound_table.csv", stringsAsFactors = FALSE, header = TRUE)
+bound_pts <- bound[,c(4,5)]
+colnames(bound_pts) <- c('x', 'y')
+
+# convert raster to SPDF, or at least get some coords
+idwevent1_pts <- coordinates(idw_event1)[!is.na(values(idw_event1)),]
+colnames(idwevent1_pts) <- c('x', 'y')
+
+# clip event idw by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw_event1) %>% as.data.frame()
+idwevent1_clip <- temp[inout(idwevent1_pts, bound_pts), ]
+colnames(idwevent1_clip) <- c('x','y','z')
+
+# plot idwevent_clip as a heatmap
+library(viridis)
+library(magrittr)
+idwevent1_clip %>% 
+  ggplot() +
+  geom_tile(aes(x,y, fill = z)) +
+  coord_fixed(1) +
+  scale_fill_viridis(name="Event Recharged Head (m)") +
+  theme_void()
+
+coordinates(idwevent1_clip) <- ~ x + y
+gridded(idwevent1_clip) <- TRUE
+idwevent1_rast <- raster(idwevent1_clip, "z")
+plot(idwevent1_rast)
+
+# calculate event 1 recharge volume
+idw_event1_ft <- idwevent1_rast*3.28084
+ac_per_cell <- 295.95456/2569
+idw_event1_acft_pcell <- idw_event1_ft*ac_per_cell
+rech_event1_acft <- cellStats(idw_event1_acft_pcell, 'sum')
+# multiply rech_event_acft by specific yield, calculate acft/ac
+rech_event1_acft_low <- rech_event1_acft*.07
+rech_event1_acft_high <- rech_event1_acft*.25
+ev1_rech <- mean(rech_event1_acft_high, rech_event1_acft_low)
+ac_clip <- 295.95456
+ev1_rech_acftac <- ev1_rech/ac_clip
+evID <- 1
+acft <- ev1_rech
+acftac <- ev1_rech_acftac
+deep_master <- data.frame(evID, acft, acftac)
+
+# Event 2 ----
+l2 <- as.data.frame(read.csv('ev2l.csv'))
+h2 <- as.data.frame(read.csv('ev2h.csv'))
+# convert to SPDFs
+coordinates(l2) <- ~ long + lat
+coordinates(h2) <- ~ long + lat
+
+# load spatial domain to interpolate over
+grid <- raster(l1, ncols=100, nrows=100)
+# interpolate lows
+lo2 <- gstat(formula = l2$l~1, locations = l1, nmax = 8, set = list(idp=2))
+ev2_idw_l <- interpolate(grid, lo2)
+# interpolate highs
+hi2 <- gstat(formula = h2$h~1, locations = h1, nmax = 8, set=list(idp=2))
+ev2_idw_h <- interpolate(grid, hi2)
+
+# high idw - low idw
+idw_event2 <- ev2_idw_h - ev2_idw_l
+plot(idw_event2)
+
+# convert raster to SPDF, or at least get some coords
+idwevent2_pts <- coordinates(idw_event2)[!is.na(values(idw_event2)),]
+colnames(idwevent2_pts) <- c('x', 'y')
+
+# clip event idw by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw_event2) %>% as.data.frame()
+idwevent2_clip <- temp[inout(idwevent2_pts, bound_pts), ]
+colnames(idwevent2_clip) <- c('x','y','z')
+
+coordinates(idwevent2_clip) <- ~ x + y
+gridded(idwevent2_clip) <- TRUE
+idwevent2_rast <- raster(idwevent2_clip, "z")
+plot(idwevent2_rast)
+
+# calculate event 1 recharge volume
+idw_event2_ft <- idwevent2_rast*3.28084
+ac_per_cell <- 295.95456/2569
+idw_event2_acft_pcell <- idw_event2_ft*ac_per_cell
+rech_event2_acft <- cellStats(idw_event2_acft_pcell, 'sum')
+# multiply rech_event_acft by specific yield, calculate acft/ac
+rech_event2_acft_low <- rech_event2_acft*.07
+rech_event2_acft_high <- rech_event2_acft*.25
+ev2_rech <- mean(rech_event2_acft_high, rech_event2_acft_low)
+ac_clip <- 295.95456
+ev2_rech_acftac <- ev2_rech/ac_clip
+evID2 <- 2
+acft2 <- ev2_rech
+acftac2 <- ev2_rech_acftac
+r2 <- c(evID2, acft2, acftac2)
+deep_master <- rbind(deep_master, r2)
+
+# Event 3 ----
+l3 <- as.data.frame(read.csv('ev3l.csv'))
+h3 <- as.data.frame(read.csv('ev3h.csv'))
+# convert to SPDFs
+coordinates(l3) <- ~ long + lat
+coordinates(h3) <- ~ long + lat
+
+# interpolate lows
+lo3 <- gstat(formula = l3$l~1, locations = l1, nmax = 8, set = list(idp=2))
+ev3_idw_l <- interpolate(grid, lo3)
+# interpolate highs
+hi3 <- gstat(formula = h3$h~1, locations = h1, nmax = 8, set=list(idp=2))
+ev3_idw_h <- interpolate(grid, hi3)
+
+# high idw - low idw
+idw_event3 <- ev3_idw_h - ev3_idw_l
+plot(idw_event3)
+
+# convert raster to SPDF, or at least get some coords
+idwevent3_pts <- coordinates(idw_event3)[!is.na(values(idw_event3)),]
+colnames(idwevent3_pts) <- c('x', 'y')
+
+# clip event idw by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw_event3) %>% as.data.frame()
+idwevent3_clip <- temp[inout(idwevent3_pts, bound_pts), ]
+colnames(idwevent3_clip) <- c('x','y','z')
+
+coordinates(idwevent3_clip) <- ~ x + y
+gridded(idwevent3_clip) <- TRUE
+idwevent3_rast <- raster(idwevent3_clip, "z")
+plot(idwevent3_rast)
+
+# calculate event 1 recharge volume
+idw_event3_ft <- idwevent3_rast*3.28084
+ac_per_cell <- 295.95456/2569
+idw_event3_acft_pcell <- idw_event3_ft*ac_per_cell
+rech_event3_acft <- cellStats(idw_event3_acft_pcell, 'sum')
+# multiply rech_event_acft by specific yield, calculate acft/ac
+rech_event3_acft_low <- rech_event3_acft*.07
+rech_event3_acft_high <- rech_event3_acft*.25
+ev3_rech <- mean(rech_event3_acft_high, rech_event3_acft_low)
+ac_clip <- 295.95456
+ev3_rech_acftac <- ev3_rech/ac_clip
+evID3 <- 3
+acft3 <- ev3_rech
+acftac3 <- ev3_rech_acftac
+r3 <- c(evID3, acft3, acftac3)
+deep_master <- rbind(deep_master, r3)
+
+
+
+
+#Event 4 ----
+
+l4 <- as.data.frame(read.csv('ev4l.csv'))
+h4 <- as.data.frame(read.csv('ev4h.csv'))
+# convert to SPDFs
+coordinates(l4) <- ~ long + lat
+coordinates(h4) <- ~ long + lat
+
+# interpolate lows
+lo4 <- gstat(formula = l4$l~1, locations = l1, nmax = 8, set = list(idp=2))
+ev4_idw_l <- interpolate(grid, lo4)
+# interpolate highs
+hi4 <- gstat(formula = h4$h~1, locations = h1, nmax = 8, set=list(idp=2))
+ev4_idw_h <- interpolate(grid, hi4)
+
+# high idw - low idw
+idw_event4 <- ev4_idw_h - ev4_idw_l
+plot(idw_event4)
+
+# convert raster to SPDF, or at least get some coords
+idwevent4_pts <- coordinates(idw_event4)[!is.na(values(idw_event4)),]
+colnames(idwevent4_pts) <- c('x', 'y')
+
+# clip event idw by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw_event4) %>% as.data.frame()
+idwevent4_clip <- temp[inout(idwevent4_pts, bound_pts), ]
+colnames(idwevent4_clip) <- c('x','y','z')
+
+coordinates(idwevent4_clip) <- ~ x + y
+gridded(idwevent4_clip) <- TRUE
+idwevent4_rast <- raster(idwevent4_clip, "z")
+plot(idwevent4_rast)
+
+# calculate event 1 recharge volume
+idw_event4_ft <- idwevent4_rast*3.28084
+ac_per_cell <- 295.95456/2569
+idw_event4_acft_pcell <- idw_event4_ft*ac_per_cell
+rech_event4_acft <- cellStats(idw_event4_acft_pcell, 'sum')
+# multiply rech_event_acft by specific yield, calculate acft/ac
+rech_event4_acft_low <- rech_event4_acft*.07
+rech_event4_acft_high <- rech_event4_acft*.25
+ev4_rech <- mean(rech_event4_acft_high, rech_event4_acft_low)
+ac_clip <- 295.95456
+ev4_rech_acftac <- ev4_rech/ac_clip
+evID4 <- 4
+acft4 <- ev4_rech
+acftac4 <- ev4_rech_acftac
+r4 <- c(evID4, acft4, acftac4)
+deep_master <- rbind(deep_master, r4)
+
+# Event 5 ----
+
+l5 <- as.data.frame(read.csv('ev5l.csv'))
+h5 <- as.data.frame(read.csv('ev5h.csv'))
+# convert to SPDFs
+coordinates(l5) <- ~ long + lat
+coordinates(h5) <- ~ long + lat
+
+# interpolate lows
+lo5 <- gstat(formula = l5$l~1, locations = l1, nmax = 8, set = list(idp=2))
+ev5_idw_l <- interpolate(grid, lo5)
+# interpolate highs
+hi5 <- gstat(formula = h5$h~1, locations = h1, nmax = 8, set=list(idp=2))
+ev5_idw_h <- interpolate(grid, hi5)
+
+# high idw - low idw
+idw_event5 <- ev5_idw_h - ev5_idw_l
+plot(idw_event5)
+
+# convert raster to SPDF, or at least get some coords
+idwevent5_pts <- coordinates(idw_event5)[!is.na(values(idw_event5)),]
+colnames(idwevent5_pts) <- c('x', 'y')
+
+# clip event idw by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw_event5) %>% as.data.frame()
+idwevent5_clip <- temp[inout(idwevent5_pts, bound_pts), ]
+colnames(idwevent5_clip) <- c('x','y','z')
+
+coordinates(idwevent5_clip) <- ~ x + y
+gridded(idwevent5_clip) <- TRUE
+idwevent5_rast <- raster(idwevent5_clip, "z")
+plot(idwevent5_rast)
+
+# calculate event 1 recharge volume
+idw_event5_ft <- idwevent5_rast*3.28084
+ac_per_cell <- 295.95456/2569
+idw_event5_acft_pcell <- idw_event5_ft*ac_per_cell
+rech_event5_acft <- cellStats(idw_event5_acft_pcell, 'sum')
+# multiply rech_event_acft by specific yield, calculate acft/ac
+rech_event5_acft_low <- rech_event5_acft*.07
+rech_event5_acft_high <- rech_event5_acft*.25
+ev5_rech <- mean(rech_event5_acft_high, rech_event5_acft_low)
+ac_clip <- 295.95456
+ev5_rech_acftac <- ev5_rech/ac_clip
+evID5 <- 5
+acft5 <- ev5_rech
+acftac5 <- ev5_rech_acftac
+r5 <- c(evID5, acft5, acftac5)
+deep_master <- rbind(deep_master, r5)
+deep_master
+
+
+
+
+
+# Event 6 ----
+l6 <- as.data.frame(read.csv('ev6l.csv'))
+h6 <- as.data.frame(read.csv('ev6h.csv'))
+# convert to SPDFs
+coordinates(l6) <- ~ long + lat
+coordinates(h6) <- ~ long + lat
+
+# interpolate lows
+lo6 <- gstat(formula = l6$l~1, locations = l1, nmax = 8, set = list(idp=2))
+ev6_idw_l <- interpolate(grid, lo6)
+# interpolate highs
+hi6 <- gstat(formula = h6$h~1, locations = h1, nmax = 8, set=list(idp=2))
+ev6_idw_h <- interpolate(grid, hi6)
+
+# high idw - low idw
+idw_event6 <- ev6_idw_h - ev6_idw_l
+plot(idw_event6)
+
+# convert raster to SPDF, or at least get some coords
+idwevent6_pts <- coordinates(idw_event6)[!is.na(values(idw_event6)),]
+colnames(idwevent6_pts) <- c('x', 'y')
+
+# clip event idw by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw_event6) %>% as.data.frame()
+idwevent6_clip <- temp[inout(idwevent6_pts, bound_pts), ]
+colnames(idwevent6_clip) <- c('x','y','z')
+
+coordinates(idwevent6_clip) <- ~ x + y
+gridded(idwevent6_clip) <- TRUE
+idwevent6_rast <- raster(idwevent6_clip, "z")
+plot(idwevent6_rast)
+
+# calculate event 1 recharge volume
+idw_event6_ft <- idwevent6_rast*3.28084
+ac_per_cell <- 295.95456/2569
+idw_event6_acft_pcell <- idw_event6_ft*ac_per_cell
+rech_event6_acft <- cellStats(idw_event6_acft_pcell, 'sum')
+# multiply rech_event_acft by specific yield, calculate acft/ac
+rech_event6_acft_low <- rech_event6_acft*.07
+rech_event6_acft_high <- rech_event6_acft*.25
+ev6_rech <- mean(rech_event6_acft_high, rech_event6_acft_low)
+ac_clip <- 295.95456
+ev6_rech_acftac <- ev6_rech/ac_clip
+evID6 <- 6
+acft6 <- ev6_rech
+acftac6 <- ev6_rech_acftac
+r6 <- c(evID6, acft6, acftac6)
+deep_master <- rbind(deep_master, r6)
+deep_master
+
+
+
+
+
+# Event 7 ----
+l7 <- as.data.frame(read.csv('ev7l.csv'))
+h7 <- as.data.frame(read.csv('ev7h.csv'))
+# convert to SPDFs
+coordinates(l7) <- ~ long + lat
+coordinates(h7) <- ~ long + lat
+
+# interpolate lows
+lo7 <- gstat(formula = l7$l~1, locations = l1, nmax = 8, set = list(idp=2))
+ev7_idw_l <- interpolate(grid, lo7)
+# interpolate highs
+hi7 <- gstat(formula = h7$h~1, locations = h1, nmax = 8, set=list(idp=2))
+ev7_idw_h <- interpolate(grid, hi7)
+
+# high idw - low idw
+idw_event7 <- ev7_idw_h - ev7_idw_l
+plot(idw_event7)
+
+# convert raster to SPDF, or at least get some coords
+idwevent7_pts <- coordinates(idw_event7)[!is.na(values(idw_event7)),]
+colnames(idwevent7_pts) <- c('x', 'y')
+
+# clip event idw by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw_event7) %>% as.data.frame()
+idwevent7_clip <- temp[inout(idwevent7_pts, bound_pts), ]
+colnames(idwevent7_clip) <- c('x','y','z')
+
+coordinates(idwevent7_clip) <- ~ x + y
+gridded(idwevent7_clip) <- TRUE
+idwevent7_rast <- raster(idwevent7_clip, "z")
+plot(idwevent7_rast)
+
+# calculate event 1 recharge volume
+idw_event7_ft <- idwevent7_rast*3.28084
+ac_per_cell <- 295.95456/2569
+idw_event7_acft_pcell <- idw_event7_ft*ac_per_cell
+rech_event7_acft <- cellStats(idw_event7_acft_pcell, 'sum')
+# multiply rech_event_acft by specific yield, calculate acft/ac
+rech_event7_acft_low <- rech_event7_acft*.07
+rech_event7_acft_high <- rech_event7_acft*.25
+ev7_rech <- mean(rech_event7_acft_high, rech_event7_acft_low)
+ac_clip <- 295.95456
+ev7_rech_acftac <- ev7_rech/ac_clip
+evID7 <- 7
+acft7 <- ev7_rech
+acftac7 <- ev7_rech_acftac
+r7 <- c(evID7, acft7, acftac7)
+deep_master <- rbind(deep_master, r7)
+deep_master
+
+
+
+
+# Event 8----
+l7 <- as.data.frame(read.csv('ev19l.csv'))
+h7 <- as.data.frame(read.csv('ev19h.csv'))
+# convert to SPDFs
+coordinates(l7) <- ~ long + lat
+coordinates(h7) <- ~ long + lat
+
+# interpolate lows
+lo7 <- gstat(formula = l7$l~1, locations = l1, nmax = 8, set = list(idp=2))
+ev7_idw_l <- interpolate(grid, lo7)
+# interpolate highs
+hi7 <- gstat(formula = h7$h~1, locations = h1, nmax = 8, set=list(idp=2))
+ev7_idw_h <- interpolate(grid, hi7)
+
+# high idw - low idw
+idw_event7 <- ev7_idw_h - ev7_idw_l
+plot(idw_event7)
+
+# convert raster to SPDF, or at least get some coords
+idwevent7_pts <- coordinates(idw_event7)[!is.na(values(idw_event7)),]
+colnames(idwevent7_pts) <- c('x', 'y')
+
+# clip event idw by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw_event7) %>% as.data.frame()
+idwevent7_clip <- temp[inout(idwevent7_pts, bound_pts), ]
+colnames(idwevent7_clip) <- c('x','y','z')
+
+coordinates(idwevent7_clip) <- ~ x + y
+gridded(idwevent7_clip) <- TRUE
+idwevent7_rast <- raster(idwevent7_clip, "z")
+plot(idwevent7_rast)
+
+# calculate event 1 recharge volume
+idw_event7_ft <- idwevent7_rast*3.28084
+ac_per_cell <- 295.95456/2569
+idw_event7_acft_pcell <- idw_event7_ft*ac_per_cell
+rech_event7_acft <- cellStats(idw_event7_acft_pcell, 'sum')
+# multiply rech_event_acft by specific yield, calculate acft/ac
+rech_event7_acft_low <- rech_event7_acft*.07
+rech_event7_acft_high <- rech_event7_acft*.25
+ev7_rech <- mean(rech_event7_acft_high, rech_event7_acft_low)
+ac_clip <- 295.95456
+ev7_rech_acftac <- ev7_rech/ac_clip
+evID19 <- 19
+acft19 <- ev7_rech
+acftac19 <- ev7_rech_acftac
+r19 <- c(evID19, acft19, acftac19)
+deep_master <- rbind(deep_master, r19)
+deep_master
+
+#remove event 11 duplicates
+deep_master <- deep_master[-c(11,12),]
+
+
+# Total change in water level----
+
+```
+
+## Calculate recharge for entire water year 
+```{r year rech, echo=FALSE}
+# Year 16-17----
+l7 <- as.data.frame(read.csv('wy_l.csv'))
+h7 <- as.data.frame(read.csv('wy_h.csv'))
+# convert to SPDFs
+coordinates(l7) <- ~ long + lat
+coordinates(h7) <- ~ long + lat
+
+# interpolate lows
+lo7 <- gstat(formula = l7$l~1, locations = l7, nmax = 8, set = list(idp=2))
+ev7_idw_l <- interpolate(grid, lo7)
+# interpolate highs
+hi7 <- gstat(formula = h7$h~1, locations = h7, nmax = 8, set=list(idp=2))
+ev7_idw_h <- interpolate(grid, hi7)
+
+# high idw - low idw
+idw_event7 <- ev7_idw_h - ev7_idw_l
+plot(idw_event7)
+
+# convert raster to SPDF, or at least get some coords
+idwevent7_pts <- coordinates(idw_event7)[!is.na(values(idw_event7)),]
+colnames(idwevent7_pts) <- c('x', 'y')
+
+# clip event idw by the innundation extent generated form our digitized polyline in ArcMap
+library(splancs)
+temp <- rasterToPoints(idw_event7) %>% as.data.frame()
+idwevent7_clip <- temp[inout(idwevent7_pts, bound_pts), ]
+colnames(idwevent7_clip) <- c('x','y','z')
+
+coordinates(idwevent7_clip) <- ~ x + y
+gridded(idwevent7_clip) <- TRUE
+idwevent7_rast <- raster(idwevent7_clip, "z")
+plot(idwevent7_rast)
+
+# calculate event 1 recharge volume
+idw_event7_ft <- idwevent7_rast*3.28084
+ac_per_cell <- 295.95456/2569
+idw_event7_acft_pcell <- idw_event7_ft*ac_per_cell
+rech_event7_acft <- cellStats(idw_event7_acft_pcell, 'sum')
+# multiply rech_event_acft by specific yield, calculate acft/ac
+rech_event7_acft_low <- rech_event7_acft*.07
+rech_event7_acft_high <- rech_event7_acft*.25
+ev7_rech <- mean(rech_event7_acft_high, rech_event7_acft_low)
+ac_clip <- 295.95456
+ev7_rech_acftac <- ev7_rech/ac_clip
+evIDy <- y
+acfty <- ev7_rech
+acftacy <- ev7_rech_acftac
+ry <- c(evIDy, acfty, acftacy)
+deep_master <- rbind(deep_master, ry)
+deep_master
+
+```
+
+## Calculate deep recharge 1016-17
+```{r deep rech, echo=FALSE}
+sum_allrech <- sum(deep_master$acft)
+sum_allrech
+```
+
+```{r 3D Plots & write raster, echo=FALSE}
+library(rgl)
+library(rasterVis)
+
+plot3D(idwevent7_rast, col=terrain.colors, useLegend=TRUE, adjust=TRUE)
+
+writeRaster(idwevent7_rast, "/Users/ayoder/Desktop/x.GTiff", format = "GTiff")
+
+```
