@@ -22,25 +22,25 @@ fake <- read.csv('GO_desirable_fake_wells.csv')
 
 m <- leaflet() %>% fitBounds(lng1 = -121.39, lat1 = 38.227236, lng2 = -121.022671, lat2 = 38.5599) %>%
       addTiles() %>%
-      addCircleMarkers(data = od, popup = ~as.character(name), label = ~as.character(name), 
+      addCircleMarkers(data = od, popup = ~as.character(name), label = ~as.character(name), labelOptions = labelOptions(noHide = TRUE, textsize='8pt', textOnly = T),
                        color = 'red', 
                        radius = 2, weight = 5,              
                        opacity = 1) %>% #Oneto-Denier
-      addCircleMarkers(data = cor, popup = ~as.character(name), label = ~as.character(name), 
+      addCircleMarkers(data = cor, popup = ~as.character(name), label = ~as.character(name), labelOptions = labelOptions(noHide = TRUE, textsize='8pt', textOnly = T), 
                        color = 'black', 
                        radius = 2, 
                        weight = 5, 
                        opacity = 1) %>% #Cosumnes Corridor
-      addCircleMarkers(data = rech, popup = ~as.character(name), label = ~as.character(name), 
+      addCircleMarkers(data = rech, popup = ~as.character(name), label = ~as.character(name), labelOptions = labelOptions(noHide = TRUE, textsize='8pt', textOnly = T),
                        color = 'blue', 
                        radius = 2, 
                        weight = 5, 
                        opacity = 1) %>% #Recharge Project
-      addCircleMarkers(data = fake, label = ~as.character(name), 
-                       color = 'purple', 
-                       radius = 2, 
-                       weight = 5, 
-                       opacity = 1) %>% #Fake Potential Well Locations
+#      addCircleMarkers(data = fake, label = ~as.character(name), labelOptions = labelOptions(noHide = TRUE, textsize='5pt', textOnly = T),
+#                       color = 'purple', 
+  #                     radius = 2, 
+   #                    weight = 5, 
+    #                   opacity = 1) %>% #Fake Potential Well Locations
       addProviderTiles(providers$Esri.WorldImagery) %>%
       addScaleBar(position = c("topright")) %>%
       addLegend(position = c("bottomright"), colors = c('red', 'blue', 'black', 'purple'), labels = c('Oneto-Denier', 
