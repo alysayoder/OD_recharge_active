@@ -1,0 +1,54 @@
+---
+title: "Cosumnes R. Thalweg"
+author: "Alysa M. Yoder"
+date: "February 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Thalweg Elevations
+
+```{r thalweg plot, echo=FALSE}
+setwd("~/GitHub/OD_recharge")
+library(tidyverse)
+mydata <- read.csv('thalwegdata_zeroomit.csv')
+colnames(mydata)[2] <- "Elevation(m)"
+
+mw <- read.csv('MW_River_Mile_Data.csv')
+mw$name <- as.character(mw$name)
+
+library(colorRamps)
+col2 <- primary.colors(n=15, no.white=TRUE)
+col3 <- c("#80FFFF", "#FF0000", "#808000", "#FF8000", "#80FF00", "#000080", "#FF0080", "#808080", "#FF8080", "#80FF80", "#0000FF", "#FF00FF", "#0080FF", "#FF80FF", "#000000")
+
+main <- ggplot() + 
+          geom_smooth(data=mydata, aes(x=RiverKM, y=Elevation, colour = "Thalweg Elevation (m)")) +
+          geom_ribbon(data=mydata, aes(x=RiverKM, y=Elevation, ymin=0, ymax=predict(loess(Elevation ~ RiverKM))))+
+          geom_line(data=mydata, aes(x=RiverKM, y=Z, colour = "Interpolated GW Elevation (m)")) +
+          geom_point(data=mw, aes(x=mw$RiverKM, y=7.5, size=-NEAR_DIST, colour=factor(name))) +
+          scale_colour_manual(values=col3)+
+          ggtitle("Thalweg Elevation vs. Interpolated Groundwater Elevation\n\n")+
+          theme_classic()+
+          theme(plot.title = element_text(hjust =0.5), legend.text = element_text(size=11)) +
+          labs(colour= "Monitoring Wells & Elevations", size= "Distance from River (m)") +
+  coord_fixed(ratio=0.2)+
+  theme(legend.key=element_blank(), legend.key.size= unit(1,"point")) +
+  scale_size("Distance from River (m)", breaks=c(-250,-500,-750),labels = c(250,500,750)) +
+  guides(fill=guide_legend(keywidth=0.5, keyheight=0.5, default.unit="inch"))
+
+            
+main
+```
+
+## 
+```{r save}
+
+ggsave("thalweg_maxGWL.pdf", width=11, height=8.5, units = "in")
+```
+
+
+
+
