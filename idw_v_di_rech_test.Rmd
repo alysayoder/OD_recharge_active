@@ -1,0 +1,86 @@
+---
+title: "IDW vs. DI Test"
+author: "Alysa M. Yoder"
+date: "March 1, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Recharge Estimate w/Diffusion Interpolation
+```{r }
+library(raster)
+# Load rasters from ArcGIS output
+high <- raster("C:/Users/ayoder/Documents/ArcGIS/DI_highs1.tif")  
+low <- raster("C:/Users/ayoder/Documents/ArcGIS/DI_lows1.tif")
+# Subtract lowest water levels from highest to create a raster of the difference
+diff <- high-low  
+
+# Determine area of entire raster
+# Raster has 68523 cells
+library(geosphere)
+lat <- distm(c(-121.3914, 38.2917), c(-121.3914, 38.31267))
+
+long <- distm(c(-121.3914, 38.2917), c(-121.3686, 38.2917))
+# Calculate area in m^2
+area <- lat * long
+# Total area is 4656185 m^2
+
+# Calculate area per cell in m^2
+m2_percell <- area/ncell(diff)
+m2_percell <- as.numeric(m2_percell)
+m3_percell <- m_percell * diff
+totm3 <- cellStats(m3_percell, "sum")
+
+# 35089489 m^3 change in volume
+# Apply Specific Yield
+lowDI <- totm3*0.07
+highDI <- totm3*.25
+```
+## Recharge Estimate w/IDW
+```{r}
+h <- read.csv("R_input_high_1617.csv")
+l <- read.csv("R_input_low_1617.csv")
+# Convert to SPDFs
+coordinates(l) <- ~ long + lat
+coordinates(h) <- ~ long + lat
+
+# load spatial domain to interpolate over
+grid <- raster(h, ncols=100, nrows=100)
+# interpolate highs
+idw_h <- gstat(formula = h$levelhigh~1, locations = h, nmax = 8, set = list(idp=2))
+idw_h <- interpolate(grid, idw_h)
+# interpolate lows
+idw_l <- gstat(formula = l$levellow~1, locations = l, nmax = 8, set=list(idp=2))
+idw_l <- interpolate(grid, idw_l)
+
+# Get difference
+diff_idw <- idw_h-idw_l
+
+# Get area per cell 
+m2_cell_idw <- area/ncell(diff_idw)
+m2_cell_idw <- as.numeric(m2_cell_idw)
+
+# m3 per cell
+m3percell_idw <- m2_cell_idw * diff_idw
+totm3_idw <- cellStats(m3percell_idw, "sum")
+
+# Apply Sy
+lowIDW <- totm3_idw*.07
+highIDW <- totm3_idw*.25
+
+```
+
+## Look at Data
+```{r}
+dat <- data.frame(lowDI, lowIDW)
+names(dat) <- c("DI", "IDW")
+
+datIDW <- data.frame(highDI, highIDW)
+names(datIDW) <- c("DI", "IDW")
+all <- rbind(dat, datIDW)
+all
+ggplot(all, aes(DI, IDW)) + geom_point() +geom_abline(intercept=0) +theme_classic()
+```
