@@ -1,0 +1,37 @@
+---
+title: "Recharge Event Determination"
+author: "Alysa M. Yoder"
+date: "March 8, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Test w/dummy data
+```{r dummy}
+library(plotly)
+x <- c(1:1000)
+random_y <- rnorm(1000, mean = 0)
+data <- data.frame(x, random_y)
+p <- plot_ly(data, x = ~x, y = ~random_y, type = 'scatter', mode = 'lines') %>%
+  rangeslider()
+p
+
+df1 <- data.frame(A = c(1,2,4, 5), B=c(1,3,NA,1), C=c(1,1,3, NA), D=c(1,1,2,2))
+df1$mean <- rowMeans(df1, na.rm=TRUE)
+df1
+```
+
+
+## Plot average hydrograph w/plotly 
+```{r}
+adata <- read.csv('allsets.csv')
+adata <- adata[-c(3,17:31)]
+adata$mean <- rowMeans(x=adata[,3:14], na.rm=TRUE)
+p2 <- plot_ly(adata, x=~Date, y=~mean, type = 'scatter', mode = 'lines') %>%
+  rangeslider()
+p2
+
+```
