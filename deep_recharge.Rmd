@@ -12,6 +12,8 @@ library(splancs)
 library(magrittr)
 library(viridis)
 library(gstat)
+library(ggplot2)
+library(raster)
 ```
 
 ## Create hydrograph consisting of average of all groundwater elevations
