@@ -9,6 +9,35 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Plot average hydrograph w/plotly 
+```{r}
+library(magrittr)
+library(plotly)
+library(lubridate)
+library(readr)
+adata <- read.csv('allsets.csv')
+adata <- adata[-c(1,3,17:31)]
+adata
+adata$mean <- rowMeans(x=adata[,2:14], na.rm=TRUE)
+p2 <- plot_ly(adata, x=~Date, y=~mean, type = 'scatter', mode = 'lines') %>%
+  rangeslider()
+p2
+
+```
+
+## Plot 2017 Water Year Hydrograph w/plotly
+```{r}
+library(lubridate)
+library(dplyr)
+df17 <- adata
+df17 %>% select(Date, SWL.7) %>%
+  filter(between(Date, as.factor("2016-31-08 12:00:00"), as.factor("2017-01-09 12:00:00")))
+
+# , SWL.19, SWL.22, SWL.23, SWL.5, SWL.3, SWL.2, SWL.9, SWL.20, SWL.11, SWL.14, SWL.13, SWL.17, mean
+    
+```
+
+
 ## Test w/dummy data
 ```{r dummy}
 library(plotly)
@@ -23,15 +52,14 @@ df1 <- data.frame(A = c(1,2,4, 5), B=c(1,3,NA,1), C=c(1,1,3, NA), D=c(1,1,2,2))
 df1$mean <- rowMeans(df1, na.rm=TRUE)
 df1
 ```
-
-
-## Plot average hydrograph w/plotly 
+## Date filter test w/airline data
 ```{r}
-adata <- read.csv('allsets.csv')
-adata <- adata[-c(3,17:31)]
-adata$mean <- rowMeans(x=adata[,3:14], na.rm=TRUE)
-p2 <- plot_ly(adata, x=~Date, y=~mean, type = 'scatter', mode = 'lines') %>%
-  rangeslider()
-p2
+library(readr)
+flight <- read_csv("airline_delay_2014_1.csv")
 
+flight %>%
+  select(FL_DATE, CARRIER, ORIGIN, ORIGIN_CITY_NAME, ORIGIN_STATE_ABR, DEP_DELAY, DEP_TIME, ARR_DELAY, ARR_TIME) %>%
+  filter(between(FL_DATE, as.Date("2014-01-05"), as.Date("2014-01-10")))
 ```
+
+
