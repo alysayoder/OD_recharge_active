@@ -29,10 +29,19 @@ p2
 ```{r}
 library(lubridate)
 library(dplyr)
-df17 <- adata
-df17 %>% select(Date, SWL.7) %>%
-  filter(between(Date, as.factor("2016-31-08 12:00:00"), as.factor("2017-01-09 12:00:00")))
+df17 <- read.csv('allsets.csv')
+df17$X <- NULL
+df17 <- as.POSIXct(df17$Date, format = "%Y-%m-%d %H:%M")
+head(df17)
+df17 %>%
+    select(df17$Date, SWL.OA, SWL.19, SWL.22, SWL.23, SWL.5, SWL.3, SWL.2, SWL.9, SWL.20, SWL.11, SWL.14, SWL.13, SWL.17, mean) %>%
+    filter(Date >= as.POSIXct("2016-10-01 00:00:00") & Date <= as.POSIXct("2017-09-31 00:00:00"))
 
+detach('package:lubridate')
+detach('package:dplyr')
+library(lubridate)
+detach('package:plotly')
+library(plotly)
 # , SWL.19, SWL.22, SWL.23, SWL.5, SWL.3, SWL.2, SWL.9, SWL.20, SWL.11, SWL.14, SWL.13, SWL.17, mean
     
 ```
