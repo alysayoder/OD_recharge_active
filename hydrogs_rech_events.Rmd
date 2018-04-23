@@ -56,6 +56,29 @@ p <- plot_ly(df17, x= ~Date, y=~SWL.OA, type = 'scatter', name = 'Oneto-Ag', mod
 p
     
 ```
+# Add inundation data from Alison
+```{r}
+library(lubridate)
+library(plotly)
+inundation_data <- read.csv("Whipple_Hydrospatial_PostRestoration_wy2013-2017.csv")
+head(inundation_data)
+inundation_data$dt <- mdy(inundation_data$dt)
+
+ay <- list(
+  tickfont = list(color= "red"),
+  overlaying = "y", 
+  side = "right", 
+  title = "second axis"
+)
+p_inundation <- plot_ly(inundation_data, x= ~dt, y= ~volume_m3, type = "scatter") %>%
+  add_trace(y=~percent_area, name="Percent Area Flooded", yaxis= 'y2') %>% # need to plot this on a secondary axis to compare. 
+  layout(
+    title = "Flooding at Oneto-Denier", yaxis2=ay,
+    xaxis = list(title="x")
+  ) %>%
+  rangeslider()
+p_inundation
+```
 
 
 
