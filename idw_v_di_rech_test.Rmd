@@ -31,7 +31,7 @@ area <- lat * long
 # Calculate area per cell in m^2
 m2_percell <- area/ncell(diff)
 m2_percell <- as.numeric(m2_percell)
-m3_percell <- m_percell * diff
+m3_percell <- m2_percell * diff
 totm3 <- cellStats(m3_percell, "sum")
 
 # 35089489 m^3 change in volume
@@ -41,6 +41,8 @@ highDI <- totm3*.25
 ```
 ## Recharge Estimate w/IDW
 ```{r}
+library(gstat)
+library(raster)
 h <- read.csv("R_input_high_1617.csv")
 l <- read.csv("R_input_low_1617.csv")
 # Convert to SPDFs
@@ -70,6 +72,7 @@ totm3_idw <- cellStats(m3percell_idw, "sum")
 # Apply Sy
 lowIDW <- totm3_idw*.07
 highIDW <- totm3_idw*.25
+plot(diff_idw)
 
 ```
 
