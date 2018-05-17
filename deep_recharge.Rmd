@@ -28,9 +28,9 @@ avgyr <- data.frame(cbind(wy,avgGWE))
 p <- ggplot() + geom_line(data=avgyr, aes(x=wy, y=avgGWE), colour = "darksalmon") +
   labs(x="Sample ID", y="Groundwater Elevation (m)")
 
-pdf(file = "1617_avg_GWE.pdf", paper = "special", width = 11, height = 8.5, onefile = TRUE)
+#pdf(file = "1617_avg_GWE.pdf", paper = "special", width = 11, height = 8.5, onefile = TRUE)
 p
-dev.off()
+#dev.off()
 ```
 
 ## Calculate recharge for each event 
