@@ -1,0 +1,6 @@
+date <- c("4/3/2018", "4/19/2018", "5/3/2018")
+date <- as.Date(date, format = "%m/%d/%Y")
+left_girth <- c(11.25, 12.0, 12.05)
+right_girth <- c(13.25, 14.25, 13.5)
+df <- data.frame(date,left_girth, right_girth)
+plot(df, type="l")
