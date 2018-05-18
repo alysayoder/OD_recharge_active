@@ -23,6 +23,9 @@ p2 <- plot_ly(adata, x=~Date, y=~mean, type = 'scatter', mode = 'lines') %>%
   rangeslider()
 p2
 
+# grab max and mins from each water year. Save as CSV files. 
+max2014 <- subset(adata, Date == "2014-05-10 12:00:00")
+min2014 <- subset(adata, Date == "2014-02-09 12:00:00")
 ```
 
 ## Plot 2017 Water Year Hydrograph w/plotly
