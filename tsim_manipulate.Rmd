@@ -1,0 +1,123 @@
+---
+title: "TProGS Output Manipulation"
+author: "Alysa M. Yoder"
+date: "May 30, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load data, manipulate into matrix form compatible w/MODFLOW
+```{r echo=FALSE}
+# read in data
+data <- read.csv('tsim_cosumnes.txt', header = T, skip = 2)
+tsim <- data[, 1] # coerce into vector
+
+# dimesnsions
+nrow = 170
+ncol = 100
+nlay = 32
+ne <- nrow*ncol*nlay
+nel <- nrow*ncol
+
+
+# starting and ending indices for subsetting tsim
+xi <- seq(1, ne, by = nel)
+xe <- seq(nel, ne, by = nel)
+
+# initalizwe a blank list to fill
+ml <- list()
+for(i in 1:nlay){
+  ml[[i]] <- tsim[xi[i] : xe[i]]
+}
+
+# reverse the list to reorder layers from tsim to modflow seqeuence
+ml <- rev(ml)
+
+# write a function that makes a matrix work for one of the layers
+my_function <- function(x){
+  mat <- matrix(x, nrow = nrow, ncol = ncol, byrow = TRUE)
+  mat <- mat[nrow(mat):1, ] # reverse rows of matrix 
+  # to return a smaller matrix around my field site
+  # mat <- mat[120:170, 60:90] # chop the matrix
+  return(mat)
+}
+
+
+# apply that function over the list
+modflow_list <- lapply(ml, my_function)
+
+# last big gut check
+# within layer 32
+tsim[1:10] == modflow_list[[32]][170, 1:10]
+tsim[101:150] == modflow_list[[32]][169, 1:50]
+
+# within layer 1
+tsim[527001:527100] == modflow_list[[1]][170, 1:100]
+```
+
+```{r}
+k <- do.call(rbind, modflow_list)
+MASS::write.matrix(k, file = "modflow_texture.tsv", sep = " ")
+```
+
+```{r}
+library(raster)
+
+plot(r)
+```
+
+## Testing to see if rows and columns were off 
+```{r}
+# read in data
+data2 <- read.csv('tsim_cosumnes.txt', header = T, skip = 2)
+tsim2 <- data2[, 1] # coerce into vector
+
+# dimesnsions
+nrow = 100
+ncol = 170
+nlay = 32
+ne <- nrow*ncol*nlay
+nel <- nrow*ncol
+
+# starting and ending indices for subsetting tsim
+xi <- seq(1, ne, by = nel)
+xe <- seq(nel, ne, by = nel)
+
+# initalizwe a blank list to fill
+ml <- list()
+for(i in 1:nlay){
+  ml[[i]] <- tsim2[xi[i] : xe[i]]
+}
+
+# reverse the list to reorder layers from tsim to modflow seqeuence
+ml <- rev(ml)
+
+# write a function that makes a matrix work for one of the layers
+my_function <- function(x){
+  mat <- matrix(x, nrow = nrow, ncol = ncol, byrow = TRUE)
+  mat <- mat[nrow(mat):1, ] # reverse rows of matrix 
+  # to return a smaller matrix around my field site
+  # mat <- mat[120:170, 60:90] # chop the matrix
+  return(mat)
+}
+
+
+# apply that function over the list
+modflow_list <- lapply(ml, my_function)
+
+# last big gut check
+# within layer 32
+#tsim[1:10] == modflow_list[[32]][170, 1:10]
+#tsim[101:150] == modflow_list[[32]][169, 1:50]
+
+# within layer 1
+#tsim[527001:527100] == modflow_list[[1]][170, 1:100]
+
+# plot to see if this worked. 
+library(raster)
+r <- raster(modflow_list[[1]])
+plot(r)
+```
