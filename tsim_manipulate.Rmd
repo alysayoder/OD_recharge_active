@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Load data, manipulate into matrix form compatible w/MODFLOW
+## Load data, manipulate into matrix form compatible w/MODFLOW, nrow and ncol are switched here. 
 ```{r echo=FALSE}
 # read in data
 data <- read.csv('tsim_cosumnes.txt', header = T, skip = 2)
@@ -58,18 +58,8 @@ tsim[101:150] == modflow_list[[32]][169, 1:50]
 tsim[527001:527100] == modflow_list[[1]][170, 1:100]
 ```
 
-```{r}
-k <- do.call(rbind, modflow_list)
-MASS::write.matrix(k, file = "modflow_texture.tsv", sep = " ")
-```
 
-```{r}
-library(raster)
-
-plot(r)
-```
-
-## Testing to see if rows and columns were off 
+## Testing to see if rows and columns were off, they were! Use this one. 
 ```{r}
 # read in data
 data2 <- read.csv('tsim_cosumnes.txt', header = T, skip = 2)
@@ -100,24 +90,29 @@ my_function <- function(x){
   mat <- matrix(x, nrow = nrow, ncol = ncol, byrow = TRUE)
   mat <- mat[nrow(mat):1, ] # reverse rows of matrix 
   # to return a smaller matrix around my field site
-  # mat <- mat[120:170, 60:90] # chop the matrix
+  mat <- mat[0:51, 85:160] # chop the matrix
   return(mat)
 }
-
-
 # apply that function over the list
 modflow_list <- lapply(ml, my_function)
 
-# last big gut check
+# last big gut check, still written to work with wrong nrow and ncol
 # within layer 32
 #tsim[1:10] == modflow_list[[32]][170, 1:10]
 #tsim[101:150] == modflow_list[[32]][169, 1:50]
 
 # within layer 1
 #tsim[527001:527100] == modflow_list[[1]][170, 1:100]
-
-# plot to see if this worked. 
+```
+## plot top layer to see if this worked.
+```{r}
 library(raster)
 r <- raster(modflow_list[[1]])
-plot(r)
+plot(r) # now it looks the same as the SGeMS visualization. 
+```
+
+## Write matrix to tsv file for MODFLOW input
+```{r}
+k <- do.call(rbind, modflow_list)
+MASS::write.matrix(k, file = "modflow_K_ODtrim.tsv", sep = " ")
 ```
