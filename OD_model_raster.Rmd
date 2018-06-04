@@ -1,0 +1,23 @@
+---
+title: "OD Model Raster Formatting"
+author: "Alysa M. Yoder"
+date: "June 1, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load .tiff and save it as a text file 
+```{r}
+library(raster)
+str_name<-'OD_DEM1.tif' 
+OD_lowres=raster(str_name)
+plot(OD_lowres)
+
+OD_lr <- as.matrix(OD_lowres)
+MASS::write.matrix(OD_lr, file = "MF_elev_OD1.tsv", sep = " ")
+
+```
+
