@@ -1,0 +1,30 @@
+---
+title: "Oneto-Denier  MODFLOW K Calc"
+author: "Alysa M. Yoder"
+date: "June 6, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Calculate harmonic mean of K in each direction based on T-ProGS
+
+```{r}
+# k1 <- sand
+# k2 <- silt
+# k3 <- clay
+k1 <- 7*10^-5
+k2 <- 2*10^-7
+k3 <- 4*10^-8
+
+# p values are proportions of each facies from T-ProGS
+p1 <- .275
+p2 <- .114
+p3 <- .611
+
+Kx <- (k1*p1 + k2*p2 + k3*p3)/3 # normal average
+Ky <- Kx
+Kz <- 3/((1/(k1*pi))+(1/(k2*p2))+ (1/(k3*p3))) # harmonic
+```
