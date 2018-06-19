@@ -82,6 +82,7 @@ lapply(packages, library, character.only=T)
 
 # calculate recharge volume w/specific yield range
 rechvol <- function(begin, end, print = TRUE) {
+  library(geosphere)
   # Determine area of entire raster
   # Raster has 68523 cells
   y_bound <- distm(c(-121.3914, 38.2917), c(-121.3914, 38.31267))
@@ -98,11 +99,11 @@ rechvol <- function(begin, end, print = TRUE) {
   grid <- raster(begin, ncols=100, nrows=100)
   
   # interpolate highs
-  idw_begin <- gstat(formula = begin$level~1, locations = begin, nmax = 8, set = list(idp=2))
+  idw_begin <- gstat(formula = begin$level~1, locations = begin, nmax = 8, set = list(idp=.05))
   idw_begin <- interpolate(grid, idw_begin)
   
   # interpolate lows
-  idw_end <- gstat(formula = end$level~1, locations = end, nmax = 8, set=list(idp=2))
+  idw_end <- gstat(formula = end$level~1, locations = end, nmax = 8, set=list(idp=.05))
   idw_end <- interpolate(grid, idw_end)
   
   # subtract to find net water levels throughout the event
