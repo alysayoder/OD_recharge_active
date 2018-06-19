@@ -1,0 +1,26 @@
+[general]
+creator=R package 'raster'
+created=2018-06-11 15:17:31
+[georeference]
+nrows=100
+ncols=100
+xmin=-121.391
+ymin=38.29174
+xmax=-121.3794
+ymax=38.31263
+projection=NA
+[data]
+datatype=FLT8S
+byteorder=little
+nbands=1
+bandorder=BIL
+categorical=FALSE
+minvalue=-1.11748743034334
+maxvalue=2.70399570547261
+nodatavalue=-1.7e+308
+[legend]
+legendtype=
+values=
+color=
+[description]
+layername=var1.pred
