@@ -14,14 +14,12 @@ knitr::opts_chunk$set(echo = TRUE)
 # read in data
 data <- read.csv('tsim_cosumnes.txt', header = T, skip = 2)
 tsim <- data[, 1] # coerce into vector
-
 # dimesnsions
 nrow = 170
 ncol = 100
 nlay = 32
 ne <- nrow*ncol*nlay
 nel <- nrow*ncol
-
 
 # starting and ending indices for subsetting tsim
 xi <- seq(1, ne, by = nel)
@@ -45,7 +43,6 @@ my_function <- function(x){
   return(mat)
 }
 
-
 # apply that function over the list
 modflow_list <- lapply(ml, my_function)
 
@@ -65,7 +62,7 @@ tsim[527001:527100] == modflow_list[[1]][170, 1:100]
 data2 <- read.csv('tsim_cosumnes.txt', header = T, skip = 2)
 tsim2 <- data2[, 1] # coerce into vector
 
-# dimesnsions
+# dimensions
 nrow = 100
 ncol = 170
 nlay = 32
