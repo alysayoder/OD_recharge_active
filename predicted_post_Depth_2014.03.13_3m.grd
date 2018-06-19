@@ -1,0 +1,26 @@
+[general]
+creator=R package 'raster'
+created=2017-06-04 12:08:57
+[georeference]
+nrows=1272
+ncols=569
+xmin=640988.253384285
+ymin=4239316.40265508
+xmax=642695.253384285
+ymax=4243132.40265508
+projection=+proj=utm +zone=10 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
+[data]
+datatype=FLT8S
+byteorder=little
+nbands=1
+bandorder=BIL
+categorical=FALSE
+minvalue=0.000717187025356717
+maxvalue=1.84742799830177
+nodatavalue=-1.7e+308
+[legend]
+legendtype=
+values=
+color=
+[description]
+layername=post_Depth_2014.03.13
