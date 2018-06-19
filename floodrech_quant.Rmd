@@ -1,0 +1,32 @@
+---
+title: "Quantitative Analysis of Floodplain Recharge"
+author: "Alysa M. Yoder"
+date: "June 15, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Plot clipped WY recharge estimates
+
+```{r}
+clipd <- read.csv("clipped_2014_17_rechargeVols.csv", header = TRUE, sep = ",")
+clipd <- clipd[1:4,1:4] #remove NA values, don't know why they're being created
+library(ggplot2)
+library(scales)
+options(scipen=1) #prints numbers in scientific notation, change to scipen=999 for reg notation
+p <- ggplot(clipd, aes(x=WY, y=MidRecharge)) +
+ geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=MinRecharge, ymax=MaxRecharge), width=.2) + 
+  xlab('Water Year') +
+  ylab('Recharge'~(m^3)) +
+  ggtitle('Estimated Recharge at Oneto-Denier') + 
+  theme_minimal()
+p #plotting the clipped recharge estimates, before removing any recharge occurring past the pre/post threshold
+
+
+
+
+```
