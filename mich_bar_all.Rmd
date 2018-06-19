@@ -1,0 +1,39 @@
+---
+title: "Recharge Minus Pre/Post Threshold"
+author: "Alysa M. Yoder"
+date: "June 18, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##
+```{r}
+dis <- read.csv("mich_bar_cms_all.csv")
+library(plyr)
+#need to add a column with just the day 
+dis$day <- format(as.POSIXct(strptime(dis$Date,"%m/%d/%Y %H:%M",tz="")) ,format = "%m/%d/%y")
+dis$year <- format(as.POSIXct(strptime(dis$Date, "%m/%d/%Y %H:%M",tz="")), format = "%Y")
+dis<-ddply(dis, .(year,day), summarise, mean=mean(MiBarCMS))
+dis <- dis[,2:3]
+dis$day <- as.Date(dis$day, format = "%m/%d/%y")
+ggplot(data = dis, aes(x=day, y=mean)) + geom_path() +
+  geom_hline(yintercept=198, linetype = "dashed", color = "red") #red line is cms threshold
+#when discharge is above 198, pre-removal conditions caused more flooding. 
+#recharge during these time period should be subtracted because it can't be attributed to fp recharge
+
+#want to be able to edit axes
+library(plotly)
+plot_ly(data=dis, x = ~day, y = ~mean, type = "scatter", mode = "line", name = "Discharge (cms)") %>%
+  #add_segments(x = "2012-12-13", xend = "2017-12-11", y = 198, yend = 198, name = "Threshold") %>%
+  #rangeslider() %>%
+  layout(
+    title = "Discharge Throughout Study",
+      xaxis = list(title = "Time"),
+      yaxis = list(title = "Discharge (cms)")
+     )
+
+
+```
