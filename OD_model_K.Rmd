@@ -15,16 +15,23 @@ knitr::opts_chunk$set(echo = TRUE)
 # k1 <- sand
 # k2 <- silt
 # k3 <- clay
-k1 <- 7*10^-5
-k2 <- 2*10^-7
-k3 <- 4*10^-8
+k1 <- (7*10^-5)*86400
+k2 <- (2*10^-7)*86400
+k3 <- (4*10^-8)*86400
 
 # p values are proportions of each facies from T-ProGS
 p1 <- .275
 p2 <- .114
 p3 <- .611
 
-Kx <- (k1*p1 + k2*p2 + k3*p3)/3 # normal average
+Kx <- ((k1*p1 + k2*p2 + k3*p3)/3) # normal average, convert to m/d
 Ky <- Kx
-Kz <- 3/((1/(k1*pi))+(1/(k2*p2))+ (1/(k3*p3))) # harmonic
+Kz <- (3/((1/(k1*pi))+(1/(k2*p2))+ (1/(k3*p3)))) # harmonic, convert to m/d
+```
+
+## Look at analogous flood day and compare MODFLOW flooded cells 
+```{r}
+library(raster)
+check <- raster("predicted_post_Depth_2014.03.13_3m.grd")
+plot(check, col = rainbow(10))
 ```
