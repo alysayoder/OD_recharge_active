@@ -1,0 +1,37 @@
+---
+title: "Evapotranspiration Data"
+author: "Alysa M. Yoder"
+date: "June 20, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r}
+library(raster)
+et <- raster("C:/Users/ayoder/Box Sync/Cosumnes/ET/aet1981_2010_ave_HST_1463959465/aet1981_2010_ave_HST_1463959465.tif")
+spplot(et, col.regions = rev(get_col_regions()), main = "my title")
+
+#raster  extraction
+library(raster)
+aet<-raster("C:/Users/ayoder/Box Sync/Cosumnes/ET/aet1981_2010_ave_HST_1463959465/aet1981_2010_ave_HST_1463959465.tif")
+plot(aet)
+library(sp)
+library(rgdal)
+shape<-readOGR(dsn="C:/Users/ayoder/Box Sync/GIS/FloodData/bound.shp")
+shape<-spTransform(shape, crs(aet))
+
+# convert spatial lines to spatial polygons 
+library(sf)
+etpoly <- st_polygonize(shape)
+etpoly <- as(etpoly, "Spatial")
+
+
+
+#extract data masked with chosen shapefile
+new <- extract(aet, shape, df = TRUE) 
+
+```
