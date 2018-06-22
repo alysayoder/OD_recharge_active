@@ -1,0 +1,53 @@
+ ---
+title: "Yearly Groundwater Recharge"
+author: "Alysa M. Yoder"
+date: "January 30, 2018"
+output: html_document
+---
+## IDW Recharge Estimates
+Recharge estimates calculated with inverse distance weighting, 2016-17 water year
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+library(gstat)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(sp)
+library(raster)
+
+idw_h_local <- raster("idw_h.tif")
+idw_l_local <- raster("idw.tif")
+idw1617_local <- raster("idw1617.tif")
+# create matrices 
+r_idw_h <- as.matrix(idw_h_local) %>% t()
+r_idw <- as.matrix(idw_l_local) %>% t()
+
+
+# 3D plot 2016-17 total recharge estimate concept 
+library(plotly)
+# plot highest and lowest on one plot
+highlow <- plot_ly(z=r_idw_h) %>%
+  add_surface() %>%
+  add_surface(z=r_idw) %>%
+  layout(
+    title = "Max and Min Groundwater Surfaces 2016-17",
+    scene = list(
+            xaxis=list(title= "^ North"),
+            yaxis=list(title = "< West"),
+            zaxis=list(title = "Groundwater Elevation (m)")
+                  ))
+highlow
+
+
+# plot difference between high and low 
+r_diff <- as.matrix(idw1617_local) %>% t()
+diff_hl <- plot_ly(z=r_diff)%>%
+  add_surface() %>%
+   layout(
+    title = "Differenced Max and Min Groundwater Surfaces 2016-17",
+    scene = list(
+            xaxis=list(title= "^ North"),
+            yaxis=list(title = "< West"),
+            zaxis=list(title = "Groundwater Elevation (m)")
+                  ))
+diff_hl
+```

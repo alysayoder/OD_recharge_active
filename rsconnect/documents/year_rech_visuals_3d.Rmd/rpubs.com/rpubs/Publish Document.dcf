@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/354127/4068d0db2a96432199aea108e35b8a6e
+bundleId: https://api.rpubs.com/api/v1/document/354127/4068d0db2a96432199aea108e35b8a6e
+url: http://rpubs.com/ayoder/354127
+when: 1517344170.0334

@@ -1,0 +1,30 @@
+---
+title: "GW Observatory Dashboard Tests"
+author: "Alysa M. Yoder"
+date: "January 26, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# packages 
+library(DBI)
+library(RSQLite)
+
+```
+
+## Research
+```{r research}
+# https://www.r-bloggers.com/using-sqlite-in-r/
+# querying sqlite databases from r: http://tiffanytimbers.com/querying-sqlite-databases-from-r/
+
+
+```
+
+## 
+```{r testing}
+
+```
+
+

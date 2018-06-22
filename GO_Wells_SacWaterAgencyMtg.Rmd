@@ -1,0 +1,68 @@
+---
+title: "S. American Sub-basin Groundwater Observatory Wells"
+author: "Alysa M. Yoder"
+date: "January 10, 2018"
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+![](ucwater.png)
+
+## Groundwater Observatory Wells
+##### The green shape represents the ideal area that the Groundwater Observatory will cover. 
+
+```{r, include = FALSE}
+library(rgdal)
+# get shapefile outline
+outline <- readOGR("GOArea.shp", layer = "GOArea", GDAL1_integer64_policy = TRUE)
+```
+
+```{r, width=40, height=40, message = FALSE, echo= FALSE}
+library(leaflet)
+library(rgdal)
+setwd("~/R/OD_recharge")
+inst <- read.csv('sacflood_installed.csv')
+rech <- read.csv('sacflood_related_sites.csv')
+potential <- read.csv('sacflood_potential.csv')
+# fitBounds(lng1 = -121.32, lat1 = 38.227236, lng2 = -121.076, lat2 = 38.5599) %>%
+
+m <- leaflet() %>%
+      addTiles() %>%
+      addPolygons(data = outline, color = "turquoise", weight = 4, smoothFactor = 0.5) %>%
+      addCircleMarkers(data = inst, label = ~as.character(inst$name), 
+                       #labelOptions = labelOptions(noHide = T, textsize = "10px", textOnly =T, direction="bottom"),
+                       color = 'black', 
+                       radius = 2, weight = 5,              
+                       opacity = 1) %>% #Installed Wells
+      addCircleMarkers(data = rech, popup = ~as.character(rech$name), label = ~as.character(rech$name), 
+                       color = 'blue', 
+                       radius = 2, 
+                       weight = 5, 
+                       opacity = 1) %>% #Recharge Project, Related Projects
+    addCircleMarkers(data = potential, popup = ~as.character(potential$name), label = ~as.character(potential$name), 
+                     #labelOptions = labelOptions(noHide = T, textsize = "10px", textOnly=T),  
+                       color = 'yellow', 
+                       radius = 2, 
+                       weight = 5, 
+                       opacity = 1) %>% #Potential GO Wells
+      addProviderTiles(providers$Esri.WorldImagery) %>%
+      addScaleBar(position = c("topright")) %>%
+      addLegend(position = c("bottomright"), colors = c('black', 'blue', 'yellow'), labels = c('UC Water Installed', 
+                                                                                            'Related Project Sites',
+                                                                                            'Potential Sites'),
+                title = 'Site Status') 
+m
+library(mapview)
+mapshot(m, file = "sacflood_mtg_map.png")
+```
+
+```{r, include = FALSE}
+library(mapview)
+library(webshot)
+mapshot(m, file = paste0(getwd(), "/GOmap.png"))
+
+```
+

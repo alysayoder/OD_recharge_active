@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## R Markdown
 ```{r}
+library(here)
+here()
 library(raster)
 et <- raster("C:/Users/ayoder/Box Sync/Cosumnes/ET/aet1981_2010_ave_HST_1463959465/aet1981_2010_ave_HST_1463959465.tif")
 spplot(et, col.regions = rev(get_col_regions()), main = "my title")
@@ -18,20 +20,23 @@ spplot(et, col.regions = rev(get_col_regions()), main = "my title")
 #raster  extraction
 library(raster)
 aet<-raster("C:/Users/ayoder/Box Sync/Cosumnes/ET/aet1981_2010_ave_HST_1463959465/aet1981_2010_ave_HST_1463959465.tif")
-plot(aet)
 library(sp)
 library(rgdal)
-shape<-readOGR(dsn="C:/Users/ayoder/Box Sync/GIS/FloodData/bound.shp")
+#shape<-readOGR(dsn="C:/Users/ayoder/Documents/R/OD_recharge/data", layer = "OD_poly")
+shape <- shapefile(here("data", "Alluvial_Bnd.shp"))
 shape<-spTransform(shape, crs(aet))
 
-# convert spatial lines to spatial polygons 
-library(sf)
-etpoly <- st_polygonize(shape)
-etpoly <- as(etpoly, "Spatial")
-
-
-
 #extract data masked with chosen shapefile
-new <- extract(aet, shape, df = TRUE) 
+new <- extract(aet, shape, sp = TRUE)
+temp <- raster::mask(aet, shape)
+```
 
+```{r}
+plot(shape)
+plot(temp, add = TRUE)
+```
+
+```{r}
+plot(aet)
+plot(shape, add=TRUE)
 ```
