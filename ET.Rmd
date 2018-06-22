@@ -12,31 +12,38 @@ knitr::opts_chunk$set(echo = TRUE)
 ## R Markdown
 ```{r}
 library(here)
-here()
 library(raster)
+library(sp)
 et <- raster("C:/Users/ayoder/Box Sync/Cosumnes/ET/aet1981_2010_ave_HST_1463959465/aet1981_2010_ave_HST_1463959465.tif")
-spplot(et, col.regions = rev(get_col_regions()), main = "my title")
+spplot(et, col.regions = rev(get_col_regions()), main = "GCM ET Data")
+```
 
+```{r}
 #raster  extraction
 library(raster)
 aet<-raster("C:/Users/ayoder/Box Sync/Cosumnes/ET/aet1981_2010_ave_HST_1463959465/aet1981_2010_ave_HST_1463959465.tif")
 library(sp)
 library(rgdal)
 #shape<-readOGR(dsn="C:/Users/ayoder/Documents/R/OD_recharge/data", layer = "OD_poly")
-shape <- shapefile(here("data", "Alluvial_Bnd.shp"))
+shape <- shapefile(here("data", "OD_poly.shp"))
 shape<-spTransform(shape, crs(aet))
 
 #extract data masked with chosen shapefile
-new <- extract(aet, shape, sp = TRUE)
-temp <- raster::mask(aet, shape)
+temp <- raster::mask(aet, shape) #extract only the ET values that are within the shape. Gives NA values which are removed in the next chunk. 
 ```
 
 ```{r}
-plot(shape)
-plot(temp, add = TRUE)
+library(dplyr)
+et_vals <- as.data.frame(temp@data@values) %>% na.omit #df with just the values of ET in the OD floodplain
+mean_et <- sapply(et_vals, mean, na.rm=TRUE) # mean ET value in mm/71556.81m^2*day
+area_cell <- 267.5002*267.5019
+meanpcell <- mean_et/area_cell #average mm/m^2*day ET at OD
+#convert to a volume by multiplying by the area of OD
+library(rgeos)
+OD_area <- area(shape) #area of OD floodplain in m^2
+ODet <- meanpcell*OD_area #mm of ET across the floodplain, unknown time units (maybe days)
+ODet_m <- ODet/1000
+#depending on units, the OD floodplain loses 11.3 m/day of water through ET
 ```
 
-```{r}
-plot(aet)
-plot(shape, add=TRUE)
-```
+
