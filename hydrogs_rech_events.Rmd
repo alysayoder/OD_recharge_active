@@ -5,8 +5,8 @@ date: "March 8, 2018"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message= FALSE)
+```{r setup}
+knitr::opts_chunk$set(root.dir = "C:/Users/ayoder/Documents/GitHub")
 ```
 
 ## Average Groundwater Levels
@@ -15,24 +15,136 @@ library(magrittr)
 library(plotly)
 library(lubridate)
 library(readr)
-adata <- read.csv('allsets.csv')
+library(dplyr)
+library(here)
+name <- here::here("data","allsets.csv")
+adata <- read.csv(name)
 adata <- adata[-c(1,3,17:31)]
 adata$mean <- rowMeans(x=adata[,2:14], na.rm=TRUE)
-p2 <- plot_ly(adata, x=~Date, y=~mean, type = 'scatter', mode = 'lines') %>%
-  rangeslider()
+p2 <- plot_ly(adata, x=~Date, y=~mean, type = 'scatter', mode = 'lines') %>% rangeslider()
 p2
 # grab max and mins from each water year. Save as CSV files. 
 max2014 <- subset(adata, Date == "2014-05-10 12:00:00")
 min2014 <- subset(adata, Date == "2014-02-09 12:00:00")
+
 ```
 
 
+## 2013 WY Groundwater Levels
+```{r}
+library(lubridate)
+library(dplyr)
+library(plotly)
+df17 <- read.csv(here::here("data", "allsets.csv")) # read in entire groundwater level dataset 
+df17$X <- NULL # remove unwanted column
+df17$mean <- rowMeans(x=df17[,2:14], na.rm=TRUE) # take the mean of all water levels
+df17$Date <- as.POSIXct(df17$Date, format = "%Y-%m-%d %H:%M:%S") # convert to appropriate date/time format
+df17 <- df17 %>%
+    filter(Date >= as.POSIXct("2012-10-01 00:00:00", tz="America/Los_Angeles") & 
+             Date <= as.POSIXct("2013-09-30 00:00:00", tz = "America/Los_Angeles")) # filter to desired date range, WY2017
+
+p <- plot_ly(df17, x= ~Date, y=~SWL.OA, type = 'scatter', name = 'Oneto-Ag', mode = 'lines') %>% # plot mean and data from all wells
+    add_trace(y=~SWL.7, name = "MW-7", mode = 'lines') %>%
+    add_trace(y=~SWL.19, name = "MW-19", mode = 'lines') %>%
+    add_trace(y=~SWL.22, name = "MW-22", mode = 'lines') %>%
+    add_trace(y=~SWL.23, name = "MW-23", mode = 'lines') %>%
+    add_trace(y=~SWL.5, name = "MW-5", mode = 'lines') %>%
+    add_trace(y=~SWL.3, name = "MW-3", mode = 'lines') %>%
+    add_trace(y=~SWL.2, name = "MW-2", mode = 'lines') %>%
+    add_trace(y=~SWL.9, name = "MW-9", mode = 'lines') %>%
+    add_trace(y=~SWL.20, name = "MW-20", mode = 'lines') %>%
+    add_trace(y=~SWL.11, name = "MW-11", mode = 'lines') %>%
+    add_trace(y=~SWL.14, name = "MW-14", mode = 'lines') %>%
+    add_trace(y=~SWL.13, name = "MW-13", mode = 'lines') %>%
+    add_trace(y=~mean, name = "Mean", mode = 'lines', line = list(color="black")) %>%     # mean SWL
+    rangeslider() %>%
+  layout(title = "2013 WY Groundwater Levels at Oneto-Denier",
+           xaxis = list(title = "Time"),
+           yaxis = list(title = "Groundwater Level (m)")
+         )
+p
+
+#in the first few months of WY2013 there was only data in Oneto-Ag, the mean is covering the Oneto Ag data. 
+    
+```
+
+
+## 2014 WY Groundwater Levels
+```{r}
+library(lubridate)
+library(dplyr)
+library(plotly)
+df17 <- read.csv(here::here("data", "allsets.csv")) # read in entire groundwater level dataset 
+df17$X <- NULL # remove unwanted column
+df17$mean <- rowMeans(x=df17[,2:14], na.rm=TRUE) # take the mean of all water levels
+df17$Date <- as.POSIXct(df17$Date, format = "%Y-%m-%d %H:%M:%S") # convert to appropriate date/time format
+df17 <- df17 %>%
+    filter(Date >= as.POSIXct("2013-10-01 00:00:00", tz="America/Los_Angeles") & 
+             Date <= as.POSIXct("2014-09-30 00:00:00", tz = "America/Los_Angeles")) # filter to desired date range, WY2017
+
+p <- plot_ly(df17, x= ~Date, y=~SWL.OA, type = 'scatter', name = 'Oneto-Ag', mode = 'lines') %>% # plot mean and data from all wells
+    add_trace(y=~SWL.7, name = "MW-7", mode = 'lines') %>%
+    add_trace(y=~SWL.19, name = "MW-19", mode = 'lines') %>%
+    add_trace(y=~SWL.22, name = "MW-22", mode = 'lines') %>%
+    add_trace(y=~SWL.23, name = "MW-23", mode = 'lines') %>%
+    add_trace(y=~SWL.5, name = "MW-5", mode = 'lines') %>%
+    add_trace(y=~SWL.3, name = "MW-3", mode = 'lines') %>%
+    add_trace(y=~SWL.2, name = "MW-2", mode = 'lines') %>%
+    add_trace(y=~SWL.9, name = "MW-9", mode = 'lines') %>%
+    add_trace(y=~SWL.20, name = "MW-20", mode = 'lines') %>%
+    add_trace(y=~SWL.11, name = "MW-11", mode = 'lines') %>%
+    add_trace(y=~SWL.14, name = "MW-14", mode = 'lines') %>%
+    add_trace(y=~SWL.13, name = "MW-13", mode = 'lines') %>%
+    add_trace(y=~mean, name = "Mean", mode = 'lines', line = list(color="black")) %>%     # mean SWL
+    rangeslider() %>%
+  layout(title = "2014 WY Groundwater Levels at Oneto-Denier",
+           xaxis = list(title = "Time"),
+           yaxis = list(title = "Groundwater Level (m)")
+         )
+p
+```
+
+## 2015 Groundwater Levels
+```{r}
+library(lubridate)
+library(dplyr)
+library(plotly)
+df17 <- read.csv(here::here("data", "allsets.csv")) # read in entire groundwater level dataset 
+df17$X <- NULL # remove unwanted column
+df17$mean <- rowMeans(x=df17[,2:14], na.rm=TRUE) # take the mean of all water levels
+df17$Date <- as.POSIXct(df17$Date, format = "%Y-%m-%d %H:%M:%S") # convert to appropriate date/time format
+df17 <- df17 %>%
+    filter(Date >= as.POSIXct("2014-10-01 00:00:00", tz="America/Los_Angeles") & 
+             Date <= as.POSIXct("2015-09-30 00:00:00", tz = "America/Los_Angeles")) # filter to desired date range, WY2017
+
+p <- plot_ly(df17, x= ~Date, y=~SWL.OA, type = 'scatter', name = 'Oneto-Ag', mode = 'lines') %>% # plot mean and data from all wells
+    add_trace(y=~SWL.7, name = "MW-7", mode = 'lines') %>%
+    add_trace(y=~SWL.19, name = "MW-19", mode = 'lines') %>%
+    add_trace(y=~SWL.22, name = "MW-22", mode = 'lines') %>%
+    add_trace(y=~SWL.23, name = "MW-23", mode = 'lines') %>%
+    add_trace(y=~SWL.5, name = "MW-5", mode = 'lines') %>%
+    add_trace(y=~SWL.3, name = "MW-3", mode = 'lines') %>%
+    add_trace(y=~SWL.2, name = "MW-2", mode = 'lines') %>%
+    add_trace(y=~SWL.9, name = "MW-9", mode = 'lines') %>%
+    add_trace(y=~SWL.20, name = "MW-20", mode = 'lines') %>%
+    add_trace(y=~SWL.11, name = "MW-11", mode = 'lines') %>%
+    add_trace(y=~SWL.14, name = "MW-14", mode = 'lines') %>%
+    add_trace(y=~SWL.13, name = "MW-13", mode = 'lines') %>%
+    add_trace(y=~mean, name = "Mean", mode = 'lines', line = list(color="black")) %>%     # mean SWL
+    rangeslider() %>%
+  layout(title = "2015 WY Groundwater Levels at Oneto-Denier",
+           xaxis = list(title = "Time"),
+           yaxis = list(title = "Groundwater Level (m)")
+         )
+p
+
+```
 ## 2017 Groundwater Levels 
 ```{r}
 library(lubridate)
 library(dplyr)
 library(plotly)
-df17 <- read.csv('allsets.csv') # read in entire groundwater level dataset 
+df17 <- read.csv(here::here("data", "allsets.csv")) # read in entire groundwater level dataset 
 df17$X <- NULL # remove unwanted column
 df17$mean <- rowMeans(x=df17[,2:14], na.rm=TRUE) # take the mean of all water levels
 df17$Date <- as.POSIXct(df17$Date, format = "%Y-%m-%d %H:%M:%S") # convert to appropriate date/time format
@@ -63,12 +175,12 @@ p
     
 ```
 
-
 ## Inundation Data: Area Flooded vs. Volume of Floodwater
 ```{r}
 library(lubridate)
 library(plotly)
-inundation_data <- read.csv("Whipple_Hydrospatial_PostRestoration_wy2013-2017.csv")
+library(here)
+inundation_data <- read.csv(here::here("data", "Whipple_Hydrospatial_PostRestoration_wy2013-2017.csv"))
 inundation_data$dt <- mdy(inundation_data$dt)
 
 ay <- list(
