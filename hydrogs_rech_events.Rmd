@@ -2,11 +2,19 @@
 title: "Recharge Event Determination"
 author: "Alysa M. Yoder"
 date: "March 8, 2018"
-output: html_document
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
+    theme: flatly
 ---
 
-```{r setup}
-knitr::opts_chunk$set(root.dir = "C:/Users/ayoder/Documents/GitHub")
+```{r setup, echo = FALSE}
+knitr::opts_chunk$set(warning = FALSE, 
+                      message = FALSE, 
+                      error = FALSE,
+                      cache = TRUE)
 ```
 
 ## Average Groundwater Levels
@@ -26,7 +34,7 @@ p2
 # grab max and mins from each water year. Save as CSV files. 
 max2014 <- subset(adata, Date == "2014-05-10 12:00:00")
 min2014 <- subset(adata, Date == "2014-02-09 12:00:00")
-
+here::here()
 ```
 
 
@@ -139,6 +147,7 @@ p <- plot_ly(df17, x= ~Date, y=~SWL.OA, type = 'scatter', name = 'Oneto-Ag', mod
 p
 
 ```
+
 ## 2017 Groundwater Levels 
 ```{r}
 library(lubridate)
