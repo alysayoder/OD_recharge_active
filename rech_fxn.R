@@ -27,12 +27,17 @@ lapply(packages, library, character.only=T)
   grid <- raster(begin, ncols=100, nrows=100)
   
   # interpolate highs
-  idw_begin <- gstat(formula = begin$level~1, locations = begin, nmax = 8, set = list(idp=1))
+  idw_begin <- gstat(formula = begin$level~1, locations = begin, nmax = 6, set = list(idp=2))
   idw_begin <- interpolate(grid, idw_begin)
   
   # interpolate lows
-  idw_end <- gstat(formula = end$level~1, locations = end, nmax = 8, set=list(idp=1))
+  idw_end <- gstat(formula = end$level~1, locations = end, nmax = 6, set=list(idp=2))
   idw_end <- interpolate(grid, idw_end)
+  
+  #plot begin and end to troubleshoot
+  #plot(idw_end, main = "End")
+  #plot(begin, add=T)
+  #plot(idw_begin, main = "Start")
   
   # subtract to find net water levels throughout the event
   event_vol <- abs(idw_end-idw_begin)
@@ -65,8 +70,9 @@ lapply(packages, library, character.only=T)
   coordinates(event_clip) <- ~ x + y
   gridded(event_clip) <- TRUE
   event_rast <- raster(event_clip, "z")
-  plot(event_rast)
-  title(main = plot_title)
+  plot(event_rast, main = plot_title)
+  plot(begin, add= TRUE)
+  
   
   # calculate area per cell 
   m2_cell_idw <- area/ncell(event_rast)
