@@ -1,5 +1,5 @@
 ---
-title: "Recharge Event Determination"
+title: "Recharge Event Determination Tool"
 author: "Alysa M. Yoder"
 date: "March 8, 2018"
 output: 
@@ -7,7 +7,7 @@ output:
     toc: TRUE
     toc_float: TRUE
     code_folding: hide
-    theme: flatly
+    theme: simplex
 ---
 
 ```{r setup, echo = FALSE}
@@ -21,8 +21,6 @@ knitr::opts_chunk$set(warning = FALSE,
 ```{r, echo = FALSE, warning = FALSE}
 library(magrittr)
 library(plotly)
-library(lubridate)
-library(readr)
 library(dplyr)
 library(here)
 name <- here::here("data","allsets.csv")
@@ -31,10 +29,9 @@ adata <- adata[-c(1,3,17:31)]
 adata$mean <- rowMeans(x=adata[,2:14], na.rm=TRUE)
 p2 <- plot_ly(adata, x=~Date, y=~mean, type = 'scatter', mode = 'lines') %>% rangeslider()
 p2
-# grab max and mins from each water year. Save as CSV files. 
+# grab max and mins from each water year.
 max2014 <- subset(adata, Date == "2014-05-10 12:00:00")
 min2014 <- subset(adata, Date == "2014-02-09 12:00:00")
-here::here()
 ```
 
 
@@ -45,7 +42,7 @@ library(dplyr)
 library(plotly)
 df17 <- read.csv(here::here("data", "allsets.csv")) # read in entire groundwater level dataset 
 df17$X <- NULL # remove unwanted column
-df17$mean <- rowMeans(x=df17[,2:14], na.rm=TRUE) # take the mean of all water levels
+df17$mean <- rowMeans(x=df17[,2:14], na.rm = TRUE) # take the mean of all water levels
 df17$Date <- as.POSIXct(df17$Date, format = "%Y-%m-%d %H:%M:%S") # convert to appropriate date/time format
 df17 <- df17 %>%
     filter(Date >= as.POSIXct("2012-10-01 00:00:00", tz="America/Los_Angeles") & 
