@@ -32,6 +32,6 @@ Kz <- (3/((1/(k1*pi))+(1/(k2*p2))+ (1/(k3*p3)))) # harmonic, convert to m/d
 ## Look at analogous flood day and compare MODFLOW flooded cells 
 ```{r}
 library(raster)
-check <- raster("predicted_post_Depth_2014.03.13_3m.grd")
+check <- raster(here::here("rasters", "predicted_post_Depth_2014.03.13_3m.grd"))
 plot(check, col = rainbow(10))
 ```
