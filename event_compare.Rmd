@@ -1,0 +1,65 @@
+---
+title: "Recharge Event Comparisons"
+author: "Alysa M. Yoder"
+date: "June 27, 2018"
+output: 
+ html_document:
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(here)
+knitr::opts_chunk$set(warning = FALSE, 
+                      message = FALSE,
+                      error = FALSE, 
+                      cache = TRUE, 
+                      eval = TRUE)
+```
+
+## Writing a df for all recharge event timeframes in 2013WY
+```{r}
+event_pre13 <- data.frame(matrix(ncol = 4, nrow = 3))
+cnames <- c("Event Number", "Start", "End", "Length")
+colnames(event_pre13) <- cnames
+
+#event_pre13$`Event Number` <- seq(1,3,1)
+event_pre13$Start <- as.POSIXct(c("12/18/2012 22:00:00", "12/23/2012 02:45:00", "01/05/2013 21:45:00"), 
+                                format = "%m/%d/%Y %H:%M")
+event_pre13$End <- as.POSIXct(c("12/19/2012 20:00:00", "12/28/2012 14:00:00", "01/09/2013 02:00:00"), 
+                                format = "%m/%d/%Y %H:%M")
+#event_pre13$Length <- event_pre13$End - event_pre13$Start #leaving empty so they'll be consistent 
+event_pre13
+```
+
+## Writing a df for all recharge event timeframes in 2014WY
+```{r}
+event_pre14 <- data.frame(matrix(ncol=4, nrow=4))
+cnames <- c("Event Number", "Start", "End", "Length")
+colnames(event_pre14) <- cnames
+#event_pre14[ ,1] <- seq(1,4,1) #leaving blank, more efficient to do all at once after rbind
+#these are start times of each event 
+event_pre14[ ,2] <- as.POSIXct(c("02/09/2014 23:00:00", 
+                                 "03/01/2014 02:00:00", 
+                                 "03/02/2014 18:35:00", 
+                                 "04/02/2014 15:45:00"),
+                               format = "%m/%d/%Y %H:%M")
+#these are end times of each event 
+event_pre14[ ,3] <- as.POSIXct(c("02/12/2014 18:00:00", 
+                                 "03/06/2014 15:30:00", 
+                                 "03/08/2014 14:00:00", 
+                                 "04/05/2014 16:00:00"),
+                               format = "%m/%d/%Y %H:%M")
+#event_pre14[ ,4] <- event_pre14[ ,3] - event_pre14[ ,2] #leaving these empty for now so units will be consistent
+```
+
+## Writing a df of all pre-removal recharge event timeframes
+```{r}
+event_pre <- rbind(event_pre13, event_pre14)
+event_pre$`Event Number` <- seq(1,nrow(event_pre), 1)
+event_pre$Length <- event_pre$End-event_pre$Start
+event_pre
+```
