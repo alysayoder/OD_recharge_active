@@ -2,14 +2,26 @@
 title: "Evapotranspiration Data"
 author: "Alysa M. Yoder"
 date: "June 20, 2018"
-output: html_document
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
+    theme: flatly
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+knitr::opts_chunk$set(warning = FALSE, 
+                      message = FALSE,
+                      error = FALSE, 
+                      cache = TRUE, 
+                      eval = TRUE)
+library(here)
 ```
 
-## R Markdown
+# Download and plot actual ET data from Toby, CA BCM 30 yr avg 
+* This data looks different than what I'm seeing on the BCM website. Re-downloading the same data doesn't work, doesn't give a functional .tif file. 
 ```{r}
 library(here)
 library(raster)
@@ -18,6 +30,7 @@ et <- raster("C:/Users/ayoder/Box Sync/Cosumnes/ET/aet1981_2010_ave_HST_14639594
 spplot(et, col.regions = rev(get_col_regions()), main = "GCM ET Data")
 ```
 
+# Extract data for Oneto-Denier
 ```{r}
 #raster  extraction
 library(raster)
@@ -25,25 +38,64 @@ aet<-raster("C:/Users/ayoder/Box Sync/Cosumnes/ET/aet1981_2010_ave_HST_146395946
 library(sp)
 library(rgdal)
 #shape<-readOGR(dsn="C:/Users/ayoder/Documents/R/OD_recharge/data", layer = "OD_poly")
-shape <- shapefile(here("data", "OD_poly.shp"))
+shape <- shapefile(here::here("data", "OD_poly.shp"))
 shape<-spTransform(shape, crs(aet))
 
 #extract data masked with chosen shapefile
 temp <- raster::mask(aet, shape) #extract only the ET values that are within the shape. Gives NA values which are removed in the next chunk. 
+
+#plot the masked AET raster
+plot(temp, xlim = bbox(shape)[1,], ylim = bbox(shape)[2,], main = "30 yr Mean AET for 1 WY at OD")
+plot(shape, add=T)
 ```
 
+# Calculate volume/rate of ET from Toby data
 ```{r}
 library(dplyr)
-et_vals <- as.data.frame(temp@data@values) %>% na.omit #df with just the values of ET in the OD floodplain
+et_vals <- as.data.frame(temp@data@values) #df with just the values of ET in the OD floodplain
 mean_et <- sapply(et_vals, mean, na.rm=TRUE) # mean ET value in mm/71556.81m^2*day
-area_cell <- 267.5002*267.5019
-meanpcell <- mean_et/area_cell #average mm/m^2*day ET at OD
-#convert to a volume by multiplying by the area of OD
-library(rgeos)
-OD_area <- area(shape) #area of OD floodplain in m^2
-ODet <- meanpcell*OD_area #mm of ET across the floodplain, unknown time units (maybe days)
-ODet_m <- ODet/1000
-#depending on units, the OD floodplain loses 11.3 m/day of water through ET
+
+#convert to a volume of ET throughout the water year 
+#using the same method that I use to get a volume from my interpolated change in head rasters
+#refer to rech_fxn.R
+
+#make sure to convert temp to m before multiplying by the area of each cell 
+m3_aet <- prod(res(temp)) * (temp/1000)
+volaet <- cellStats(m3_aet, "sum") #total volume of ET over 1 WY in cubic meters
+
+tempinfo <- as.data.frame(freq(temp, useNA="no"))
+ncelltemp <- sum(tempinfo$count)
+mET <- volaet/(ncelltemp*(prod(res(temp)))) #matches the mean_et value calculated above 
 ```
 
+# Analyze this ET number with yearly recharge estimates
+* this estimate of aet is very significant when considered with rech estimates
+* this could be because the recharge estimate time spans don't occur throughout the entire water year. Times when recharge occurs(Dec-May) do align with (Mar-May) historical times of higher AET. 
+```{r}
+library(knitr)
+rcdf <- read.csv(here::here("data", "clipped_2014_17_rechargeVols.csv"), 
+                 header = TRUE, 
+                 stringsAsFactors = FALSE, 
+                nrows = 4)[ ,1:4] #bracket subset is a workaround for the absence of a 'ncols' option like 'nrows'
+rcdf$AETVol_divby_MidRechVol <- volaet/(rcdf$MidRecharge) 
+kable(rcdf)
+```
+
+***
+# Newly downloaded historical ET data, crosscheck w/data from Toby
+* something is wrong with this .tif, data will plot, but doesn't match what shows up on the BCM online map interface. et2@data@values shows up having no data, max and min is inf and -inf. 
+```{r}
+library(here)
+library(raster)
+library(sp)
+library(dplyr)
+et2 <- raster(here::here("rasters", "aet1971_2000ave_HST_1530123260", "aet1971_2000ave_HST_1530123260.tif"))
+
+plot(et2)
+plot(shape, add=T)
+
+et2_up <- as.data.frame(et2@data@values) %>% na.omit()
+mean_et2 <- sapply(et2_up, mean, na.rm=TRUE)
+mean_et2
+```
 
