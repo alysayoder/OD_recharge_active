@@ -8,7 +8,7 @@
 # calculate recharge volume w/specific yield range
 rechvol <- function(begin, end, plot_title, print = TRUE) {
  # load packages
-packages <- c("raster", "geosphere", "gstat", "splancs", "dplyr", "ggplot2", "here")
+packages <- c("raster", "geosphere", "gstat", "splancs", "dplyr", "ggplot2", "here", "knitr", "viridis")
 lapply(packages, library, character.only=T)
 
   # Determine area of entire raster
@@ -73,7 +73,6 @@ lapply(packages, library, character.only=T)
   plot(event_rast, main = plot_title)
   plot(begin, add= TRUE)
   
-  
   # calculate area per cell 
   m2_cell_idw <- area/ncell(event_rast)
   m2_cell_idw <- as.numeric(m2_cell_idw)
@@ -87,6 +86,9 @@ lapply(packages, library, character.only=T)
   midIDW <- totm3_idw*0.16
   highIDW <- totm3_idw*0.25
   
-  result <-  list(lowIDW,midIDW,highIDW)
+  result <-  matrix(c(lowIDW,midIDW,highIDW), ncol=1)
+  colnames(result) <- "Recharge Volume m^3"
+  rownames(result) <- c("low", "mid", "high")
+  result <- as.table(result)
   return(result)
 }
