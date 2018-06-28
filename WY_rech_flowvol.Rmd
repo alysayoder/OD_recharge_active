@@ -1,0 +1,82 @@
+---
+title: "Water Year Rech Vol per Flow Vol"
+author: "Alysa M. Yoder"
+date: "June 28, 2018"
+output: 
+ html_document:
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(here)
+knitr::opts_chunk$set(warning = FALSE, 
+                      message = FALSE,
+                      error = FALSE, 
+                      cache = TRUE, 
+                      eval = TRUE)
+```
+
+
+## Create df with begin and end dates for each WY's recharge period
+```{r}
+WYtf <- data.frame(matrix(ncol=4, nrow=4))
+colnames(WYtf) <- c("WY", "Start", "End", "Length")
+WYtf$WY <- seq(2014,2017,1)
+WYtf$Start <- as.POSIXct(c("2014-02-09 12:00:00",
+                         "2014-12-04 12:00:00",
+                         "2015-12-10 12:00:00",
+                         "2016-10-19 12:00:00"))
+WYtf$End <- as.POSIXct(c("2014-05-10 12:00:00",
+                          "2015-04-12 12:00:00",
+                          "2016-03-18 12:00:00",
+                          "2017-02-11 12:00:00"))
+WYtf$Length <- WYtf$End-WYtf$Start
+```
+
+## Create df with total discharge vol for each WY recharge term
+```{r}
+#call functions from 'event_compare.Rmd' 
+source("Qvol_fxn.R")
+source("evsub_fxn.R")
+WY <- seq(2014,2017,1)
+QdatWY <- data.frame(WY) # event number in event_pre corresponds to the row numbers in Qdat. 
+
+for (row in 1:nrow(WYtf)) {
+ QdatWY[row, 2] <- Qvol(ev_data = evsub(WYtf[row,2], WYtf[row,3]))
+}
+colnames(QdatWY) <- c("WY", "Integrated Discharge m^3")
+kable(QdatWY)
+```
+
+## Recharge Vol per Integrated Discharge Vol
+```{r}
+rech <- read.csv(here::here("data", "clipped_2014_17_rechargeVols.csv"), header = TRUE, sep = ",")
+rech <- rech[1:4,1:4] #remove NA values, don't know why they're being created
+
+anlz <- cbind(QdatWY, rech$MidRecharge)
+anlz$rech_per_qvol <- anlz$`rech$MidRecharge`/anlz$`Integrated Discharge m^3`
+colnames(anlz) <- c("WY", "Integrated Discharge m^3", "Recharge (m^3)", "Recharge per Cumulative Q")
+kable(anlz)
+library(ggplot2)
+ggplot(anlz, aes(x=anlz$WY)) + 
+  geom_bar(aes(y = anlz$`Recharge per Cumulative Q`), fill = "blue", stat = "identity") +
+  geom_bar(aes(y = anlz$`Recharge (m^3)`/1e13), fill = "red", stat = "identity") +
+  scale_y_continuous(sec.axis = sec_axis(~.*1e13, name = "Recharge")) +
+  labs(y = "Recharge per Integrated Q", 
+       x = "Water Year",
+       colour = "Legend") +
+  theme_light()
+
+ggplot(anlz, aes(x =WY, y = anlz$`Integrated Discharge m^3`)) + geom_bar(stat = "identity", fill = "pink") +
+  theme_light()
+library(plotly)
+p <- plot_ly(anlz, x = WY, y = anlz$`Integrated Discharge m^3`, type = 'bar', name = 'QVol') %>%
+  add_trace(y = anlz$`Recharge (m^3)`, name = 'Recharge Vol') %>%
+  add_trace(y = anlz$`Recharge per Cumulative Q`, name = "Rech per Qvol") %>% 
+  layout(yaxis = list(title = 'Value', type = "log"), barmode = 'group')
+p
+```
