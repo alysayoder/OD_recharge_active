@@ -32,7 +32,6 @@ event_pre13$Start <- as.POSIXct(c("12/18/2012 22:00:00", "12/23/2012 02:45:00", 
 event_pre13$End <- as.POSIXct(c("12/19/2012 20:00:00", "12/28/2012 14:00:00", "01/09/2013 02:00:00"), 
                                 format = "%m/%d/%Y %H:%M")
 #event_pre13$Length <- event_pre13$End - event_pre13$Start #leaving empty so they'll be consistent 
-event_pre13
 ```
 
 ## Writing a df for all recharge event timeframes in 2014WY
@@ -61,5 +60,44 @@ event_pre14[ ,3] <- as.POSIXct(c("02/12/2014 18:00:00",
 event_pre <- rbind(event_pre13, event_pre14)
 event_pre$`Event Number` <- seq(1,nrow(event_pre), 1)
 event_pre$Length <- event_pre$End-event_pre$Start
-event_pre
+
 ```
+***
+## Get integrated discharge volume for each pre-removal event
+
+### Get Data
+```{r}
+library(here)
+library(dplyr)
+library(kableExtra)
+mb <- read.csv(here::here("data", "mich_bar_cms_all.csv"), stringsAsFactors = FALSE)
+mb$Date <- as.POSIXct(mb$Date, format = "%m/%d/%Y %H:%M")
+```
+
+### Call Subset and Volume calculator functions
+```{r}
+source("Qvol_fxn.R")
+source("evsub_fxn.R")
+```
+
+### Put Integrated Discharge Values into a df
+```{r}
+#add event ID column to DF for cleaner result communication
+EventID <- seq(1,nrow(event_pre),1)
+
+Qdat <- data.frame(EventID) # event number in event_pre corresponds to the row numbers in Qdat. 
+
+for (row in 1:nrow(event_pre)) {
+ Qdat[row, 2] <- Qvol(ev_data = evsub(event_pre[row,2], event_pre[row,3]))
+}
+colnames(Qdat) <- c("Event #", "Integrated Discharge m^3^")
+ 
+```
+
+### Results
+```{r}
+kable(Qdat, caption = "Integrated Flow Volume at Michigan Bar during Pre-Levee Removal Recharge Events (m^3^)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
