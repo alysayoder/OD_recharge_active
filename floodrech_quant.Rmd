@@ -12,7 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Plot clipped WY recharge estimates
 
 ```{r}
-clipd <- read.csv("clipped_2014_17_rechargeVols.csv", header = TRUE, sep = ",")
+library(here)
+clipd <- read.csv(here::here("data", "clipped_2014_17_rechargeVols.csv"), header = TRUE, sep = ",")
 clipd <- clipd[1:4,1:4] #remove NA values, don't know why they're being created
 library(ggplot2)
 library(scales)
@@ -25,8 +26,6 @@ p <- ggplot(clipd, aes(x=WY, y=MidRecharge)) +
   ggtitle('Estimated Recharge at Oneto-Denier') + 
   theme_minimal()
 p #plotting the clipped recharge estimates, before removing any recharge occurring past the pre/post threshold
-
-
 
 
 ```
