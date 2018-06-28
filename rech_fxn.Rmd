@@ -1,5 +1,5 @@
 ---
-title: "Recharge Function"
+title: "Recharge Function Applications"
 author: "Alysa M. Yoder"
 date: "June 25, 2018"
 output: 
@@ -164,8 +164,6 @@ kable(vols) %>%
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = F, position = "left")
 ```
 
-
-
 # Get Lat Long Coordinates for Each Well, this also happens inside 'rechcalc_gwl_format.R' function
 ```{r, include= FALSE}
 # format dataframes w/lat long 
@@ -183,5 +181,9 @@ max2015 <- as.data.frame(t(subset(adata,Date =="2015-04-12 12:00:00")))
 min2015 <- as.data.frame(t(subset(adata,Date =="2014-12-04 12:00:00")))
 
 max2016 <- as.data.frame(t(subset(adata,Date =="2016-03-18 12:00:00")))
-min2016 <- as.data.frame(t(subset(adata,Date=="2016-12-10 12:00:00")))
+min2016 <- as.data.frame(t(subset(adata,Date=="2015-12-10 12:00:00")))
+
+min2017 <- as.data.frame(t(subset(adata,Date=="2016-10-19 12:00:00")))
+max2017 <- as.data.frame(t(subset(adata,Date=="2017-02-11 12:00:00")))
+
 ```
