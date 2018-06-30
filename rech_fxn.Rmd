@@ -34,7 +34,7 @@ Actual function is in rech_fxn.R, this 'rech_fxn.Rmd' has the formatting and its
 
 # Get Groundwater Level Data
 ```{r}
-adata <- read.csv(here('data', 'allsets.csv'), stringsAsFactors = FALSE)
+adata <- read.csv(here::here('data', 'allsets.csv'))
 adata <- adata[-c(1,3,15,17:31)] #removing index numbers, MW-13, Oneto-Ag (confined), and Nathan's text 
 ```
 
