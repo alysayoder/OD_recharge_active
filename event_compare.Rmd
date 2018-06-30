@@ -74,14 +74,11 @@ mb <- read.csv(here::here("data", "mich_bar_cms_all.csv"), stringsAsFactors = FA
 mb$Date <- as.POSIXct(mb$Date, format = "%m/%d/%Y %H:%M")
 ```
 
-### Call Subset and Volume calculator functions
-```{r}
-source("Qvol_fxn.R")
-source("evsub_fxn.R")
-```
-
 ### Put Integrated Discharge Values into a df
 ```{r}
+source("Qvol_fxn.R") #calculates cumulative discharge throughout a time period w/Mich.Bar data
+source("evsub_fxn.R") #creates df with data from the specified time interval 
+
 #add event ID column to DF for cleaner result communication
 EventID <- seq(1,nrow(event_pre),1)
 
@@ -101,3 +98,18 @@ kable(Qdat, caption = "Integrated Flow Volume at Michigan Bar during Pre-Levee R
 
 ```
 
+## Estimate Recharge for each pre-removal event
+```{r}
+source("rech_fxn.R")
+source("rechcalc_gwl_format.R")
+rechout <- data.frame(EventID)
+dat <- 
+for (ev in 1:nrow(event_pre)) {
+  dat[[ev]][1] <- as.data.frame(t(subset(adata, Date == as.character(event_pre$Start[ev]))))
+  dat[[ev]][2] <- as.data.frame(t(subset(adata, Date == as.character(event_pre$End[ev]))))
+}
+
+ #rechvol(begin = dat[[ev]][1], end = dat[[ev]][2], plot_title = "Pre-Removal Recharge Events"
+
+
+```
