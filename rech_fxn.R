@@ -19,6 +19,12 @@ lapply(packages, library, character.only=T)
   area <- y_bound * x_bound
   # Total area is 4656185 m^2
   
+  #deal with NA vals
+  #complete.cases selects only the rows that are complete, eliminating all rows containing NA values
+  #need to also do this in formatting function.. somehow
+  begin <- begin[complete.cases(begin), ]
+  end <- end[complete.cases(end), ]
+  
   # define coordinate system
   coordinates(begin) <- ~ long + lat
   coordinates(end) <- ~ long + lat
@@ -85,10 +91,10 @@ lapply(packages, library, character.only=T)
   lowIDW <- totm3_idw*0.07
   midIDW <- totm3_idw*0.16
   highIDW <- totm3_idw*0.25
-  
-  result <-  matrix(c(lowIDW,midIDW,highIDW), ncol=1)
-  colnames(result) <- "Recharge Volume m^3"
-  rownames(result) <- c("low", "mid", "high")
-  result <- as.table(result)
-  return(result)
+  return (midIDW)
+  #result <-  matrix(c(lowIDW,midIDW,highIDW), ncol=1)
+  #colnames(result) <- "Recharge Volume m^3"
+  #rownames(result) <- c("low", "mid", "high")
+  #result <- as.table(result)
+  #return(result)
 }

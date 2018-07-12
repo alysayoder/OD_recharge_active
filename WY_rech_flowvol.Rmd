@@ -21,8 +21,9 @@ knitr::opts_chunk$set(warning = FALSE,
 ```
 
 
+
+```{r, include = FALSE}
 ## Create df with begin and end dates for each WY's recharge period
-```{r}
 WYtf <- data.frame(matrix(ncol=4, nrow=4))
 colnames(WYtf) <- c("WY", "Start", "End", "Length")
 WYtf$WY <- seq(2014,2017,1)
@@ -37,8 +38,9 @@ WYtf$End <- as.POSIXct(c("2014-05-10 12:00:00",
 WYtf$Length <- WYtf$End-WYtf$Start
 ```
 
+
+```{r, include = FALSE}
 ## Create df with total discharge vol for each WY recharge term
-```{r}
 #call functions from 'event_compare.Rmd' 
 source("Qvol_fxn.R")
 source("evsub_fxn.R")
@@ -65,18 +67,18 @@ library(ggplot2)
 ggplot(anlz, aes(x=anlz$WY)) + 
   geom_bar(aes(y = anlz$`Recharge per Cumulative Q`), fill = "blue", stat = "identity") +
   geom_bar(aes(y = anlz$`Recharge (m^3)`/1e13), fill = "red", stat = "identity") +
-  scale_y_continuous(sec.axis = sec_axis(~.*1e13, name = "Recharge")) +
-  labs(y = "Recharge per Integrated Q", 
+  scale_y_continuous(sec.axis = sec_axis(~.*1e13, name = "Recharge (red)")) +
+  labs(y = "Recharge per Integrated Q (blue)", 
        x = "Water Year",
        colour = "Legend") +
   theme_light()
 
-ggplot(anlz, aes(x =WY, y = anlz$`Integrated Discharge m^3`)) + geom_bar(stat = "identity", fill = "pink") +
-  theme_light()
+#ggplot(anlz, aes(x =WY, y = anlz$`Integrated Discharge m^3`)) + geom_bar(stat = "identity", fill = "pink") +
+#  theme_light()
 library(plotly)
-p <- plot_ly(anlz, x = WY, y = anlz$`Integrated Discharge m^3`, type = 'bar', name = 'QVol') %>%
-  add_trace(y = anlz$`Recharge (m^3)`, name = 'Recharge Vol') %>%
-  add_trace(y = anlz$`Recharge per Cumulative Q`, name = "Rech per Qvol") %>% 
-  layout(yaxis = list(title = 'Value', type = "log"), barmode = 'group')
-p
+#p <- plot_ly(anlz, x = WY, y = anlz$`Integrated Discharge m^3`, type = 'bar', name = 'QVol') %>%
+#  add_trace(y = anlz$`Recharge (m^3)`, name = 'Recharge Vol') %>%
+#  add_trace(y = anlz$`Recharge per Cumulative Q`, name = "Rech per Qvol") %>% 
+#  layout(yaxis = list(title = 'Value', type = "log"), barmode = 'group')
+#p
 ```
