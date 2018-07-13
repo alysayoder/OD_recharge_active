@@ -33,3 +33,4 @@ rasters
 .here
 hydrogs_rech_events.html
 rsconnect/documents/hydrogs_rech_events.Rmd/rpubs.com/rpubs/Publish Document.dcf
+*.dcf
