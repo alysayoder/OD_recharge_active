@@ -95,7 +95,8 @@ colnames(Qdat) <- c("Event #", "Integrated Discharge m^3^")
 kable(Qdat, format = "markdown", caption = "Integrated Flow Volume at Michigan Bar during Pre-Levee Removal Recharge Events (m^3)") 
 #to make a LaTex table, change format from "markdwon" to "latex"
 ```
-# Get Groundwater Level Data
+# Process
+## Get Groundwater Level Data
 ```{r}
 adata <- read.csv(here::here('data', 'allsets.csv'))
 adata <- adata[-c(1,3,15,17:31)] #removing index numbers, MW-13, Oneto-Ag (confined), and Nathan's text 
@@ -194,9 +195,9 @@ colnames(postrech) <- c("Event ID", "Recharge Volume (m3)")
 kable(postrech, format = "markdown")
 ```
 
-# Can come back later to do post-removal cumulative discharge calcs if needed
-```{r post discharge calc}
 
+```{r post discharge calc, include = FALSE}
+# Can come back later to do post-removal cumulative discharge calcs if needed
 ```
 ## Combine dfs of pre and post events into one big df
 ```{r}
@@ -206,11 +207,28 @@ vols <- rbind(prerech, postrech)
 rech <- cbind(allev, vols)
 pre_string <- rep("pre", 7)
 post_string <- rep("post", 19)
+kable(rech, format = "markdown")
 rech$id <- as.factor(c(pre_string,post_string))
-rech
+```
+# Plot of Recharge Volumes of Each Event
+* Use range slider to zoom in on time periods. 
+* Hover over bars to see exact start date and recharge volume of that event. 
+```{r}
+width = as.vector.factor(rech$Length*100)
+t <- plot_ly(rech, x = rech$Start[1:7], y = rech$`Recharge Volume (m3)`[1:7], type ='bar', 
+             name = "pre levee removal", marker = list(color = "#43a2ca"), width = width[1:7]) %>%
+  add_trace(x = rech$Start[8:26], y=rech$`Recharge Volume (m3)`[8:26], 
+            name = "post levee removal", marker = list(color= "#a8ddb5") , width = width[8:26]) %>%
+  layout(
+    title = "Recharge Volume of Each Event",
+    xaxis = list(title = 'Time', zeroline = TRUE),
+    yaxis = list(title = 'Recharge Volume (m3)')
+  ) %>%
+  rangeslider()
+t
 ```
 
-# Plot the recharge vols of each event 
+## Other Recharge Event Volume Plots
 ```{r plot rech vols}
 library(ggplot2)
 library(plyr)
@@ -218,7 +236,6 @@ library(plotly)
 
 ggplot(data = rech) + 
   geom_point(aes(x=rech$Start, y=rech$`Recharge Volume (m3)`)) + 
-  geom_point(aes(x=rech$End, y = rech$`Recharge Volume (m3)`)) +
   theme_bw() + 
   labs(title = "Recharge Volume of Event (m3)", x = "Date", y = "Recharge Volume (m3)")
 
@@ -234,15 +251,4 @@ barplot(height = rech$`Recharge Volume (m3)`, width = barwidth,
                 sub = "Pre and Post Levee Removal",
                 legend.text = TRUE,
                 border = NA)
-
-#w/plotly
-p <- ggplot(data=rech, aes(x=Start, y=rech$`Recharge Volume (m3)`), fill = id) +
-  geom_bar(stat="identity", colour = "black", 
-           position = position_dodge(),
-           size = .3)+
-  xlab("Time") + ylab("Recharge Volume (m3)") +
-  ggtitle("Recharge Event Volumes Pre and Post Levee Removal") +
-  theme_bw()
-p <- ggplotly(p) 
-p
 ```
