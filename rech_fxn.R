@@ -22,8 +22,8 @@ lapply(packages, library, character.only=T)
   #deal with NA vals
   #complete.cases selects only the rows that are complete, eliminating all rows containing NA values
   #need to also do this in formatting function.. somehow
-  begin <- begin[complete.cases(begin), ]
-  end <- end[complete.cases(end), ]
+  # begin <- begin[complete.cases(begin), ]
+  # end <- end[complete.cases(end), ]
   
   # define coordinate system
   coordinates(begin) <- ~ long + lat

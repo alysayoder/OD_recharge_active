@@ -3,18 +3,20 @@ title: "Recharge Event Determination Tool"
 author: "Alysa M. Yoder"
 date: "March 8, 2018"
 output: 
-  html_document:
+ html_document:
     toc: TRUE
     toc_float: TRUE
     code_folding: hide
     theme: flatly
 ---
 
-```{r setup, echo = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(warning = FALSE, 
-                      message = FALSE, 
-                      error = FALSE,
-                      cache = TRUE)
+                      message = FALSE,
+                      error = FALSE, 
+                      cache = TRUE, 
+                      eval = TRUE)
+getwd()
 ```
 
 ## Average Groundwater Levels
@@ -239,6 +241,4 @@ p_inundation <- plot_ly(inundation_data, x= ~dt, y= ~volume_m3, name = "Volume o
   rangeslider()
 p_inundation
 ```
-
-
 
