@@ -74,53 +74,6 @@ mb <- read.csv(here::here("data", "mich_bar_cms_all.csv"), stringsAsFactors = FA
 mb$Date <- as.POSIXct(mb$Date, format = "%m/%d/%Y %H:%M")
 ```
 
-### Put Integrated Discharge Values into a df
-```{r}
-source("Qvol_fxn.R") #calculates cumulative discharge throughout a time period w/Mich.Bar data
-source("evsub_fxn.R") #creates df with data from the specified time interval 
-
-#add event ID column to DF for cleaner result communication
-EventID <- seq(1,nrow(event_pre),1)
-
-Qdat <- data.frame(EventID) # event number in event_pre corresponds to the row numbers in Qdat. 
-
-for (row in 1:nrow(event_pre)) {
- Qdat[row, 2] <- Qvol(ev_data = evsub(event_pre[row,2], event_pre[row,3]))
-}
-colnames(Qdat) <- c("Event #", "Integrated Discharge m^3^")
-```
-
-### Results
-```{r}
-kable(Qdat, format = "markdown", caption = "Integrated Flow Volume at Michigan Bar during Pre-Levee Removal Recharge Events (m^3)") 
-#to make a LaTex table, change format from "markdwon" to "latex"
-```
-# Process
-## Get Groundwater Level Data
-```{r}
-adata <- read.csv(here::here('data', 'allsets.csv'))
-adata <- adata[-c(1,3,15,17:31)] #removing index numbers, MW-13, Oneto-Ag (confined), and Nathan's text 
-```
-## Estimate Recharge for each pre-removal event
-```{r}
-source("rech_fxn.R")
-source("rechcalc_gwl_format.R")
-startdat <- list()
-enddat <- list()
-for (ev in 1:nrow(event_pre)) {
-  startdat[[ev]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, Date == as.character(event_pre$Start[ev])))))
-  enddat[[ev]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, Date == as.character(event_pre$End[ev])))))
-}
-prerech <- matrix(nrow = length(EventID), ncol = 2)
-prerech <- as.data.frame(prerech)
-prerech[,1] <- EventID
-for (ev in 1:nrow(event_pre)) {
- prerech[ev,2] <- rechvol(begin = startdat[[ev]], end = enddat[[ev]], plot_title = "Pre-Removal Recharge Events")
-}
-colnames(prerech) <- c("Event ID", "Recharge Volume (m3)")
-kable(prerech, format = "markdown")
-```
-## Estimate recharge for post-removal events 
 ### This comprises 2015-2017
 ```{r post removal}
 event_post <- data.frame(matrix(ncol=4, nrow=19))
@@ -174,6 +127,59 @@ event_post$`Event Number` <- seq(1,nrow(event_post), 1)
 event_post$Length <- event_post$End-event_post$Start
 ```
 
+```{r combine pre and post event timestamps}
+event <- rbind(event_pre, event_post)
+```
+
+### Put Integrated Discharge Values into a df
+```{r}
+source("Qvol_fxn.R") #calculates cumulative discharge throughout a time period w/Mich.Bar data
+source("evsub_fxn.R") #creates df with data from the specified time interval 
+
+#add event ID column to DF for cleaner result communication
+EventID <- seq(1,nrow(event),1)
+
+Qdat <- data.frame(EventID) # event number in event_pre corresponds to the row numbers in Qdat. 
+
+for (row in 1:nrow(event)) {
+ Qdat[row, 2] <- Qvol(ev_data = evsub(event[row,2], event[row,3]))
+}
+colnames(Qdat) <- c("Event #", "Integrated Discharge m^3^")
+```
+
+### Results
+```{r}
+kable(Qdat, format = "markdown", caption = "Integrated Flow Volume at Michigan Bar during Pre-Levee Removal Recharge Events (m^3)") 
+#to make a LaTex table, change format from "markdwon" to "latex"
+```
+# Process
+## Get Groundwater Level Data
+```{r}
+adata <- read.csv(here::here('data', 'allsets.csv'))
+adata <- adata[-c(1,3,15,17:31)] #removing index numbers, MW-13, Oneto-Ag (confined), and Nathan's text 
+```
+## Estimate Recharge for each pre-removal event
+```{r}
+source("rech_fxn.R")
+source("rechcalc_gwl_format.R")
+startdat <- list()
+enddat <- list()
+for (ev in 1:nrow(event_pre)) {
+  startdat[[ev]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, Date == as.character(event_pre$Start[ev])))))
+  enddat[[ev]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, Date == as.character(event_pre$End[ev])))))
+}
+prerech <- matrix(nrow = length(EventID), ncol = 2)
+prerech <- as.data.frame(prerech)
+prerech[,1] <- EventID
+for (ev in 1:nrow(event_pre)) {
+ prerech[ev,2] <- rechvol(begin = startdat[[ev]], end = enddat[[ev]], plot_title = "Pre-Removal Recharge Events")
+}
+colnames(prerech) <- c("Event ID", "Recharge Volume (m3)")
+kable(prerech, format = "markdown")
+```
+## Estimate recharge for post-removal events 
+
+
 ##Actual recharge calc for post-removal events
 ```{r}
 source("rech_fxn.R")
@@ -195,10 +201,6 @@ colnames(postrech) <- c("Event ID", "Recharge Volume (m3)")
 kable(postrech, format = "markdown")
 ```
 
-
-```{r post discharge calc, include = FALSE}
-# Can come back later to do post-removal cumulative discharge calcs if needed
-```
 ## Combine dfs of pre and post events into one big df
 ```{r}
 allev <- rbind(event_pre,event_post)
@@ -209,26 +211,38 @@ pre_string <- rep("pre", 7)
 post_string <- rep("post", 19)
 kable(rech, format = "markdown")
 rech$id <- as.factor(c(pre_string,post_string))
+rech$ld <- as.numeric(rech$Length/24)
+rech$ld <- round(rech$ld, digits = 1)
 ```
 # Plot of Recharge Volumes of Each Event
 * Use range slider to zoom in on time periods. 
-* Hover over bars to see exact start date and recharge volume of that event. 
+* Hover over bars to display the event length and recharge volume. 
 ```{r}
+library(plotly)
 width = as.vector.factor(rech$Length*100)
-t <- plot_ly(rech, x = rech$Start[1:7], y = rech$`Recharge Volume (m3)`[1:7], type ='bar', 
-             name = "pre levee removal", marker = list(color = "#43a2ca"), width = width[1:7]) %>%
-  add_trace(x = rech$Start[8:26], y=rech$`Recharge Volume (m3)`[8:26], 
-            name = "post levee removal", marker = list(color= "#a8ddb5") , width = width[8:26]) %>%
+t <- plot_ly(rech) %>%
+  add_trace(x=mb$Date, y=mb$MiBarCMS, type = "scatter", mode = "lines", name="Discharge (cms)", yaxis="y2",
+            line = list(color = '#45171D', width = 0.5))%>% 
+  add_trace(x = rech$Start[1:7], y = rech$`Recharge Volume (m3)`[1:7], type ='bar', 
+             name = "pre levee removal", marker = list(color = "#43a2ca"), 
+            hoverinfo = 'text', text = ~paste(rech$ld[1:7], 'days'), width = width[1:7]) %>%
+  add_trace(x = rech$Start[8:26], y=rech$`Recharge Volume (m3)`[8:26], type = 'bar',
+            name = "post levee removal", marker = list(color= "#a8ddb5"), 
+            hoverinfo = 'text', text = ~paste(rech$ld[8:26], 'days'), width = width[8:26]) %>%
+  rangeslider() %>%
   layout(
+    hovermode = 'compare',
     title = "Recharge Volume of Each Event",
-    xaxis = list(title = 'Time', zeroline = TRUE),
-    yaxis = list(title = 'Recharge Volume (m3)')
-  ) %>%
-  rangeslider()
+    xaxis = list(title = 'Time', zeroline = FALSE),
+    yaxis = list(title = 'Recharge Volume (m3)', showgrid = FALSE, zeroline = FALSE),
+    yaxis2 = list(side = 'right', overlaying = 'y', title ='Discharge (cms)', showgrid = FALSE, zeroline = FALSE))
+   # legend = list(x=0.1, y = 0.9))
 t
+#need to look at these results relative to MB hydrograph
+
 ```
 
-## Other Recharge Event Volume Plots
+## Additional Recharge Event Volume Plots
 ```{r plot rech vols}
 library(ggplot2)
 library(plyr)
@@ -251,4 +265,29 @@ barplot(height = rech$`Recharge Volume (m3)`, width = barwidth,
                 sub = "Pre and Post Levee Removal",
                 legend.text = TRUE,
                 border = NA)
+```
+
+```{r agreement test}
+agree <- cbind(rech$`Event ID`, rech$`Recharge Volume (m3)`, rech$id, Qdat$`Integrated Discharge m^3^`)
+colnames(agree) <- c('ID', 'RechVol', 'prevpost', 'Cumul.Dis')
+agree <- as.data.frame(agree)
+agree$RechPerDis <- agree$RechVol/agree$Cumul.Dis
+
+#put the df in order of smallest Q to largest
+agreesort <- agree[order(agree$Cumul.Dis),]
+#load new df with the pairs of pre post events that are most similar considering Qvol
+library(here)
+ag <- read.csv(here::here("agree.csv"))
+library(plotly)
+at <- plot_ly(agree) %>%
+  add_trace(x=~ID[1:7], y = ~RechPerDis[1:7], type = 'scatter', mode = 'marker') %>%
+  add_trace(x=~ID[8:26], y=~RechPerDis[8:26], type = 'scatter', mode = 'marker')
+
+agr <- plot_ly(ag) %>%
+  add_trace(x=~pre, y=~post, type = "scatter", opacity = .8, 
+            marker = list(size =20, color = "#458B74"), name = 'pre v post') %>%
+  add_trace(x=c(0,5.5e-4), y = c(0,5.5e-4), type = "scatter", mode = 'lines', 
+            line = list(color = '#000000'), name = "1:1") %>%
+  layout(title = 'Pre vs. Post Agreement for Events with Similar Cumulative Discharge Volumes')
+agr
 ```
