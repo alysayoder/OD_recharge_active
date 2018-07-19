@@ -20,8 +20,9 @@ knitr::opts_chunk$set(warning = FALSE,
                       eval = TRUE)
 ```
 
-## Writing a df for all recharge event timeframes in 2013WY
 ```{r}
+
+## Writing a df for all recharge event timeframes in 2013WY
 event_pre13 <- data.frame(matrix(ncol = 4, nrow = 3))
 cnames <- c("Event Number", "Start", "End", "Length")
 colnames(event_pre13) <- cnames
@@ -34,8 +35,9 @@ event_pre13$End <- as.POSIXct(c("12/19/2012 20:00:00", "12/28/2012 14:00:00", "0
 #event_pre13$Length <- event_pre13$End - event_pre13$Start #leaving empty so they'll be consistent 
 ```
 
+
+```{r pre removal dates, include=FALSE}
 ## Writing a df for all recharge event timeframes in 2014WY
-```{r pre removal dates}
 event_pre14 <- data.frame(matrix(ncol=4, nrow=4))
 cnames <- c("Event Number", "Start", "End", "Length")
 colnames(event_pre14) <- cnames
@@ -55,18 +57,19 @@ event_pre14[ ,3] <- as.POSIXct(c("02/12/2014 18:00:00",
 #event_pre14[ ,4] <- event_pre14[ ,3] - event_pre14[ ,2] #leaving these empty for now so units will be consistent
 ```
 
+
+```{r, include=FALSE}
 ## Writing a df of all pre-removal recharge event timeframes
-```{r}
 event_pre <- rbind(event_pre13, event_pre14)
 event_pre$`Event Number` <- seq(1,nrow(event_pre), 1)
 event_pre$Length <- event_pre$End-event_pre$Start
 
 ```
-***
-## Get integrated discharge volume for each pre-removal event
 
+
+```{r, include=FALSE}
+## Get integrated discharge volume for each pre-removal event
 ### Get Data
-```{r}
 library(here)
 library(dplyr)
 library(kableExtra)
@@ -74,8 +77,9 @@ mb <- read.csv(here::here("data", "mich_bar_cms_all.csv"), stringsAsFactors = FA
 mb$Date <- as.POSIXct(mb$Date, format = "%m/%d/%Y %H:%M")
 ```
 
+
+```{r post removal, include=FALSE}
 ### This comprises 2015-2017
-```{r post removal}
 event_post <- data.frame(matrix(ncol=4, nrow=19))
 cnames <- c("Event Number", "Start", "End", "Length")
 colnames(event_post) <- cnames
@@ -127,12 +131,13 @@ event_post$`Event Number` <- seq(1,nrow(event_post), 1)
 event_post$Length <- event_post$End-event_post$Start
 ```
 
-```{r combine pre and post event timestamps}
+```{r combine pre and post event timestamps, include=FALSE}
 event <- rbind(event_pre, event_post)
 ```
 
+
+```{r, include=FALSE}
 ### Put Integrated Discharge Values into a df
-```{r}
 source("Qvol_fxn.R") #calculates cumulative discharge throughout a time period w/Mich.Bar data
 source("evsub_fxn.R") #creates df with data from the specified time interval 
 
@@ -147,19 +152,22 @@ for (row in 1:nrow(event)) {
 colnames(Qdat) <- c("Event #", "Integrated Discharge m^3^")
 ```
 
+
+```{r, include=FALSE}
 ### Results
-```{r}
 kable(Qdat, format = "markdown", caption = "Integrated Flow Volume at Michigan Bar during Pre-Levee Removal Recharge Events (m^3)") 
 #to make a LaTex table, change format from "markdwon" to "latex"
 ```
+
+```{r, include = FALSE}
 # Process
 ## Get Groundwater Level Data
-```{r}
 adata <- read.csv(here::here('data', 'allsets.csv'))
 adata <- adata[-c(1,3,15,17:31)] #removing index numbers, MW-13, Oneto-Ag (confined), and Nathan's text 
 ```
+
+```{r, include = FALSE}
 ## Estimate Recharge for each pre-removal event
-```{r}
 source("rech_fxn.R")
 source("rechcalc_gwl_format.R")
 startdat <- list()
@@ -168,20 +176,22 @@ for (ev in 1:nrow(event_pre)) {
   startdat[[ev]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, Date == as.character(event_pre$Start[ev])))))
   enddat[[ev]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, Date == as.character(event_pre$End[ev])))))
 }
-prerech <- matrix(nrow = length(EventID), ncol = 2)
+prerech <- matrix(nrow = length(EventID[1:7]), ncol = 2)
 prerech <- as.data.frame(prerech)
-prerech[,1] <- EventID
+prerech[,1] <- EventID[1:7]
 for (ev in 1:nrow(event_pre)) {
  prerech[ev,2] <- rechvol(begin = startdat[[ev]], end = enddat[[ev]], plot_title = "Pre-Removal Recharge Events")
 }
 colnames(prerech) <- c("Event ID", "Recharge Volume (m3)")
 kable(prerech, format = "markdown")
 ```
+
+
+
+
+```{r, include = FALSE}
 ## Estimate recharge for post-removal events 
-
-
 ##Actual recharge calc for post-removal events
-```{r}
 source("rech_fxn.R")
 source("rechcalc_gwl_format.R")
 startdat <- list()
@@ -201,8 +211,8 @@ colnames(postrech) <- c("Event ID", "Recharge Volume (m3)")
 kable(postrech, format = "markdown")
 ```
 
-## Combine dfs of pre and post events into one big df
-```{r}
+# Recharge Estimate for Each Event, 2013-2017
+```{r result table}
 allev <- rbind(event_pre,event_post)
 allev$`Event Number` <- NULL
 vols <- rbind(prerech, postrech)
@@ -242,7 +252,7 @@ t
 
 ```
 
-## Additional Recharge Event Volume Plots
+# Additional Recharge Event Volume Plots
 ```{r plot rech vols}
 library(ggplot2)
 library(plyr)
@@ -267,6 +277,7 @@ barplot(height = rech$`Recharge Volume (m3)`, width = barwidth,
                 border = NA)
 ```
 
+# Recharge Volume per Cumulative River Discharge, Pre vs. Post
 ```{r agreement test}
 agree <- cbind(rech$`Event ID`, rech$`Recharge Volume (m3)`, rech$id, Qdat$`Integrated Discharge m^3^`)
 colnames(agree) <- c('ID', 'RechVol', 'prevpost', 'Cumul.Dis')
