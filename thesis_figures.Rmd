@@ -1,0 +1,42 @@
+---
+title: "Thesis Figures"
+author: "Alysa M. Yoder"
+date: "August 3, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Pre and Post Levee Removal LiDAR
+```{r}
+library(here)
+library(raster)
+library(rgdal)
+post <- raster(here::here("rasters", "postmask_utm.ovr")) #get pre-restoration data
+pre <- raster(here::here("rasters", "premask_utm2.ovr"))
+
+
+library(gridExtra)
+library(lattice)
+
+par(mfcol=(c(1,2)))
+plot(pre, col = bpy.colors(100), main = "Pre Levee Removal Elevation (m)", axes = FALSE)
+plot(post, col = bpy.colors(100), main = "Post Levee Removal Elevation (m)", axes=FALSE)
+dev.copy(png, "prepost_lidar.png")
+dev.off()
+```
+
+
+##Ended up using this one, its cleaner 
+```{r}
+library(raster)
+library(rasterVis)
+library(gridExtra)
+p1 <- levelplot(pre, col.regions = bpy.colors(100), margin = FALSE, main = "Elevation (m) Pre Levee Removal")
+p2 <- levelplot(post, col.regions = bpy.colors(100), margin = FALSE, main = "Elevation (m) Post Levee Removal")
+grid.arrange(p1, p2, ncol =2)
+# dev.copy(pdf, "prepost_lidarm.pdf")
+# dev.off()
+```
