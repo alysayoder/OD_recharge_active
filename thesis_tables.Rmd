@@ -1,0 +1,30 @@
+---
+title: "Thesis Tables"
+author: "Alysa M. Yoder"
+date: "July 31, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Beginning and end of each year's recharge span
+```{r}
+library(here)
+be <- read.csv(here::here("thesis_data", "beginend_WYrech.csv"))
+library(knitr)
+kable(be, format = "latex", caption = "Dates when minimum and maximum water levels occurred for each water year, 2012-2016.")
+```
+
+##Yearly Recharge Estimates w/bells and whistles
+```{r}
+library(here)
+wyrech <- read.csv(here::here("thesis_data", "WYrech.csv"))
+library(knitr)
+library(kableExtra)
+library(dplyr)
+#first column should be 3cm, all others should be 2 cm. haven't tested this yet. 
+kable(wyrech, format = "latex", caption = "toad is cute") %>%
+  column_spec(1:5, width = "3cm")
+```
