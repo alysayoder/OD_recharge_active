@@ -62,7 +62,7 @@ rech <- rech[1:4,1:4] #remove NA values, don't know why they're being created
 anlz <- cbind(QdatWY, rech$MidRecharge)
 anlz$rech_per_qvol <- anlz$`rech$MidRecharge`/anlz$`Integrated Discharge m^3`
 colnames(anlz) <- c("WY", "Integrated Discharge m^3", "Recharge (m^3)", "Recharge per Cumulative Q")
-kable(anlz)
+kable(anlz, format = "markdown")
 library(ggplot2)
 ggplot(anlz, aes(x=anlz$WY)) + 
   geom_bar(aes(y = anlz$`Recharge per Cumulative Q`), fill = "blue", stat = "identity") +
