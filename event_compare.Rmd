@@ -10,7 +10,7 @@ output:
     theme: flatly
 ---
 
-```{r setup, include=FALSE}
+```{r setup}
 library(knitr)
 library(here)
 knitr::opts_chunk$set(warning = FALSE, 
@@ -35,8 +35,7 @@ event_pre13$End <- as.POSIXct(c("12/19/2012 20:00:00", "12/28/2012 14:00:00", "0
 #event_pre13$Length <- event_pre13$End - event_pre13$Start #leaving empty so they'll be consistent 
 ```
 
-
-```{r pre removal dates, include=FALSE}
+```{r pre removal dates}
 ## Writing a df for all recharge event timeframes in 2014WY
 event_pre14 <- data.frame(matrix(ncol=4, nrow=4))
 cnames <- c("Event Number", "Start", "End", "Length")
@@ -57,8 +56,7 @@ event_pre14[ ,3] <- as.POSIXct(c("02/12/2014 18:00:00",
 #event_pre14[ ,4] <- event_pre14[ ,3] - event_pre14[ ,2] #leaving these empty for now so units will be consistent
 ```
 
-
-```{r, include=FALSE}
+```{r}
 ## Writing a df of all pre-removal recharge event timeframes
 event_pre <- rbind(event_pre13, event_pre14)
 event_pre$`Event Number` <- seq(1,nrow(event_pre), 1)
@@ -66,8 +64,7 @@ event_pre$Length <- event_pre$End-event_pre$Start
 
 ```
 
-
-```{r, include=FALSE}
+```{r}
 ## Get integrated discharge volume for each pre-removal event
 ### Get Data
 library(here)
@@ -76,10 +73,9 @@ library(kableExtra)
 mb <- read.csv(here::here("data", "mich_bar_cms_all.csv"), stringsAsFactors = FALSE)
 mb$Date <- as.POSIXct(mb$Date, format = "%m/%d/%Y %H:%M")
 ```
-
-
-```{r post removal, include=FALSE}
 ### This comprises 2015-2017
+```{r post removal}
+
 event_post <- data.frame(matrix(ncol=4, nrow=19))
 cnames <- c("Event Number", "Start", "End", "Length")
 colnames(event_post) <- cnames
@@ -131,13 +127,13 @@ event_post$`Event Number` <- seq(1,nrow(event_post), 1)
 event_post$Length <- event_post$End-event_post$Start
 ```
 
-```{r combine pre and post event timestamps, include=FALSE}
+```{r combine pre and post event timestamps}
 event <- rbind(event_pre, event_post)
+#write.csv(event, file = "rch_evnts.csv")
 ```
 
-
-```{r, include=FALSE}
 ### Put Integrated Discharge Values into a df
+```{r}
 source("Qvol_fxn.R") #calculates cumulative discharge throughout a time period w/Mich.Bar data
 source("evsub_fxn.R") #creates df with data from the specified time interval 
 
@@ -152,22 +148,22 @@ for (row in 1:nrow(event)) {
 colnames(Qdat) <- c("Event #", "Integrated Discharge m^3^")
 ```
 
-
-```{r, include=FALSE}
 ### Results
+```{r}
 kable(Qdat, format = "markdown", caption = "Integrated Flow Volume at Michigan Bar during Pre-Levee Removal Recharge Events (m^3)") 
-#to make a LaTex table, change format from "markdwon" to "latex"
+#to make a LaTex table, change format from "markdown" to "latex"
 ```
 
-```{r, include = FALSE}
 # Process
 ## Get Groundwater Level Data
+```{r}
+
 adata <- read.csv(here::here('data', 'allsets.csv'))
 adata <- adata[-c(1,3,15,17:31)] #removing index numbers, MW-13, Oneto-Ag (confined), and Nathan's text 
 ```
 
-```{r, include = FALSE}
 ## Estimate Recharge for each pre-removal event
+```{r}
 source("rech_fxn.R")
 source("rechcalc_gwl_format.R")
 startdat <- list()
@@ -186,27 +182,30 @@ colnames(prerech) <- c("Event ID", "Recharge Volume (m3)")
 kable(prerech, format = "markdown")
 ```
 
-
-
-
-```{r, include = FALSE}
 ## Estimate recharge for post-removal events 
 ##Actual recharge calc for post-removal events
+```{r}
 source("rech_fxn.R")
 source("rechcalc_gwl_format.R")
 startdat <- list()
 enddat <- list()
+
 for (n in 1:nrow(event_post)) {
-  startdat[[n]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, Date == as.character(event_post$Start[n])))))
-  enddat[[n]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, Date == as.character(event_post$End[n])))))
+  startdat[[n]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, 
+    Date == as.character(event_post$Start[n])))))
+  enddat[[n]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, 
+    Date == as.character(event_post$End[n])))))
 }
+
 postrech <- matrix(nrow = 19, ncol = 2)
 postrech <- as.data.frame(postrech)
 EventID_post <- seq(8,nrow(event_post)+7,1)
 postrech[,1] <- EventID_post
+
 for (ev in 1:nrow(event_post)) {
  postrech[ev,2] <- rechvol(begin = startdat[[ev]], end = enddat[[ev]], plot_title = "Post-Removal Recharge Events")
 }
+
 colnames(postrech) <- c("Event ID", "Recharge Volume (m3)")
 kable(postrech, format = "markdown")
 ```
@@ -277,18 +276,19 @@ barplot(height = rech$`Recharge Volume (m3)`, width = barwidth,
                 border = NA)
 ```
 
+
 # Recharge Volume per Cumulative River Discharge, Pre vs. Post
 ```{r agreement test}
-agree <- cbind(rech$`Event ID`, rech$`Recharge Volume (m3)`, rech$id, Qdat$`Integrated Discharge m^3^`)
+agree <- cbind(rech$`Event ID`, rech$`Recharge Volume (m3)`, 
+               rech$id, Qdat$`Integrated Discharge m^3^`) %>%
+      as.data.frame()
 colnames(agree) <- c('ID', 'RechVol', 'prevpost', 'Cumul.Dis')
-agree <- as.data.frame(agree)
 agree$RechPerDis <- agree$RechVol/agree$Cumul.Dis
-
 #put the df in order of smallest Q to largest
 agreesort <- agree[order(agree$Cumul.Dis),]
 #load new df with the pairs of pre post events that are most similar considering Qvol
 library(here)
-ag <- read.csv(here::here("agree.csv"))
+ag <- read.csv(here::here("data", "agree.csv"))
 library(plotly)
 at <- plot_ly(agree) %>%
   add_trace(x=~ID[1:7], y = ~RechPerDis[1:7], type = 'scatter', mode = 'marker') %>%
@@ -299,6 +299,120 @@ agr <- plot_ly(ag) %>%
             marker = list(size =20, color = "#458B74"), name = 'pre v post') %>%
   add_trace(x=c(0,5.5e-4), y = c(0,5.5e-4), type = "scatter", mode = 'lines', 
             line = list(color = '#000000'), name = "1:1") %>%
-  layout(title = 'Pre vs. Post Agreement for Events with Similar Cumulative Discharge Volumes')
+  layout(title = 'Event Recharge Vol. per Event Cumulative Discharge Vol. pre and post levee removal')
 agr
+```
+# Recharge vs. Cumulative Discharge of Each Event
+```{r rech v dis}
+library(devtools)
+library(ggplot2)
+devtools::source_gist("524eade46135f6348140", filename = "ggplot_smooth_func.R")
+ggplot(agree,aes(colour=factor(prevpost))) + 
+  geom_point(aes(x=agree$Cumul.Dis, y=agree$RechVol)) +
+ scale_y_log10()+
+  scale_x_log10()+
+  annotation_logticks(base=10, sides = 'bl', scaled = TRUE, short=unit(0.1, "cm"))+
+  geom_smooth(data=agree[1:7,], aes(x=agree$Cumul.Dis[1:7], y=agree$RechVol[1:7]), 
+              method="lm", se=T) +
+  geom_smooth(data=agree[8:26,], aes(x=agree$Cumul.Dis[8:26], y=agree$RechVol[8:26]), 
+              method="lm", se=T) +
+  scale_colour_discrete(name="Levee Removal Status", 
+                        breaks=c(2,1),
+                        labels=c("Pre-Removal", "Post-Removal")) +
+  #labs(title = "Recharge Volume vs. Cumulative Discharge", 
+       #subtitle="Throughout Each Recharge Event, 2013-2017") +
+       xlab(bquote('Cumulative Discharge ('~m^3~') (log)')) +
+       ylab(bquote('Recharge Volume ('~m^3~') (log)')) +
+  theme(legend.position = "right")
+  # stat_smooth_func(data= agree[1:7,], aes(x=agree$Cumul.Dis[1:7], y=agree$RechVol[1:7]),
+  #                  geom="text", method="lm", hjust=0,parse=TRUE) +
+  # stat_smooth_func(data=agree[8:26,], aes(x=agree$Cumul.Dis[8:26], y=agree$RechVol[8:26]),
+  #                  geom="text", method="lm", hjust=0, parse=TRUE)
+library(here)
+ggsave(here::here("rech_vs_discharge_95.pdf"), device = "pdf", width=11, height=8)
+```
+
+## bin data points to small, med and large recharge events
+```{r}
+
+
+
+
+```
+
+## determine the actual difference in recharge volumes between the pre line and the post line
+```{r regression analytics}
+#this is based on transferring the data to Excel. The equations coming from stat_smooth_func are wrong.
+#in excel, I found that the best fit is the power model 
+#x and y equations shown below
+post_y <- function(x) {
+  post_y = 19.068*(x^0.4264)
+    return(post_y)
+}
+
+pre_y <- function(x) {
+  pre_y = 0.9145*x^0.5411
+  return(pre_y)
+}
+lodif <- post_y(138472068) - pre_y(138472068)
+hidif <- post_y(11961832779) - pre_y(11961832779)
+library(rgdal)
+shape <- readOGR(dsn = here::here("rasters"), layer = "trim")
+shape2 <-  readOGR(dsn = here::here("rasters"), layer = "trimpoly")
+rast <- raster(here::here("rasters", "x.tif"))
+polyarea <- areaPolygon(shape2)
+```
+
+
+```{r rech vs dis no log scale}
+ggplot(agree,aes(colour=factor(prevpost))) + 
+  geom_point(aes(x=agree$Cumul.Dis, y=agree$RechVol)) +
+  geom_smooth(data=agree[1:7,], aes(x=agree$Cumul.Dis[1:7], y=agree$RechVol[1:7]), 
+              method="lm", se=F) +
+  geom_smooth(data=agree[8:26,], aes(x=agree$Cumul.Dis[8:26], y=agree$RechVol[8:26]), 
+              method="lm", se=F) +
+  scale_colour_discrete(name="Levee Removal Status", 
+                        breaks=c(2,1),
+                        labels=c("Pre-Removal", "Post-Removal")) +
+  labs(title = "Recharge Volume vs. Cumulative Discharge", 
+       subtitle="Throughout Each Recharge Event, 2013-2017") +
+       xlab(bquote('Cumulative Discharge ('~m^3~')')) +
+       ylab(bquote('Recharge Volume ('~m^3~')'))+
+  stat_smooth_func(data= agree[1:7,], aes(x=agree$Cumul.Dis[1:7], y=agree$RechVol[1:7]),
+                   geom="text", method="lm", hjust=0,parse=TRUE) +
+  stat_smooth_func(data=agree[8:26,], aes(x=agree$Cumul.Dis[8:26], y=agree$RechVol[8:26]),
+                   geom="text", method="lm", hjust=0, parse=TRUE)
+# ggsave("rechvsdis_nolog.png", width=11, height=8)
+```
+
+```{r}
+agree_yr <- agree
+agree_yr$year <- c(2012, 2012, 2013, 2014, 2014, 2014, 2014, 2014, 2014, 2015, 2015, 
+                   2016, 2016, 2016, 2016, 2016, 2016, 2016, 2017, 2017, 2017, 2017,
+                   2017, 2017, 2017, 2017)
+ggplot(agree_yr,aes(colour=factor(year))) + 
+  geom_point(aes(x=agree$Cumul.Dis, y=agree$RechVol)) +
+ scale_y_log10()+
+  scale_x_log10()+
+  geom_smooth(data=agree_yr[1:7,], aes(x=agree_yr$Cumul.Dis[1:7], y=agree_yr$RechVol[1:7]), 
+              method="lm", se=F) +
+  geom_smooth(data=agree_yr[8:26,], aes(x=agree_yr$Cumul.Dis[8:26], y=agree_yr$RechVol[8:26]), 
+              method="lm", se=F) +
+  scale_colour_discrete(name="Year of Event", 
+                        breaks=c(2012, 2013, 2014, 2015, 2016, 2017),
+                        labels=c("2012", "2013", "2014", "2015", "2016", "2017")) +
+  labs(title = "Recharge Volume vs. Cumulative Discharge", 
+       subtitle="Throughout Each Recharge Event, 2012-2017") +
+       xlab(bquote('Cumulative Discharge ('~m^3~') (log)')) +
+       ylab(bquote('Recharge Volume ('~m^3~') (log)')) 
+
+```
+
+```{r test}
+# data <- as.data.frame(data)
+# test <- ggplot(data, aes(x=xs, y=ys))+
+#          geom_point() +
+#   geom_smooth(method = "lm")+
+#   stat_smooth_func(geom = "text", method = "lm",hjust=0,parse=TRUE)
+# test
 ```
