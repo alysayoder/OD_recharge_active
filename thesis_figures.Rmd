@@ -40,3 +40,10 @@ grid.arrange(p1, p2, ncol =2)
 # dev.copy(pdf, "prepost_lidarm.pdf")
 # dev.off()
 ```
+
+##Plotly surface plot of the max and min water levels of a recharge event
+```{r}
+library(plotly)
+
+
+```

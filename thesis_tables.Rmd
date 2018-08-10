@@ -17,6 +17,14 @@ library(knitr)
 kable(be, format = "latex", caption = "Dates when minimum and maximum water levels occurred for each water year, 2012-2016.")
 ```
 
+##Recharge Event Dates
+```{r}
+library(here)
+events <- read.csv(here::here("rch_evnts.csv"))
+library(knitr)
+kable(events, format = "latex", caption = "Dates of the beginning and end of each groundwater recharge event between water years 2013--2017. Events 1--7 took place pre--restoration, events 8--26 took place post--restoration.")
+```
+
 ##Yearly Recharge Estimates w/bells and whistles
 ```{r}
 library(here)
