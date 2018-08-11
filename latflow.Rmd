@@ -1,0 +1,262 @@
+---
+title: "Lateral Flow Estimates"
+author: "Alysa M. Yoder"
+date: "August 9, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+##currently this must be used in conjunction with event_compare, not remaking dfs for this file
+```
+
+## 
+```{r}
+#created command in rech_lat_fxn2.R that tells you to pass in 'rastname' for each raster that is written
+#need to write a for loop to do that here
+source(here::here("rech_lat_fxn2.R"))
+source(here::here("rechcalc_gwl_format.R"))
+
+#make list of strings to use as filenames for lows and highs
+names_low <- list(nrow=NROW(event))
+myseq <- 1:NROW(event)
+for (i in 1:length(myseq)) {
+names_low[i] <- paste(myseq[i], "low.tif", sep="")
+}
+
+names_hi <- list(nrow=NROW(event))
+myseq <- 1:NROW(event)
+for (j in 1:length(myseq)) {
+  names_hi[j] <- paste(myseq[j], "hi.tif", sep="")
+}
+
+startdat <- list()
+enddat <- list()
+for (ev in 1:nrow(event)) {
+  startdat[[ev]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, Date == as.character(event$Start[ev])))))
+  enddat[[ev]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, Date == as.character(event$End[ev])))))
+}
+
+rechall <- matrix(nrow = length(EventID[1:26]), ncol = 2) %>% as.data.frame()
+rechall[,1] <- EventID[1:26]
+
+for (ev in 1:nrow(event)) {
+rechvol_lat(begin = startdat[[ev]], end = enddat[[ev]], r_begin = as.character(names_low[ev]), r_end = as.character(names_hi[ev]))
+}
+
+```
+
+## Extract points from rasters
+```{r}
+library(raster)
+library(rgdal)
+library(here)
+#hard code hi rasters
+hi1 <- raster(here::here("rasters", "1hi.tif"))
+hi2 <- raster(here::here("rasters", "2hi.tif"))
+hi3 <- raster(here::here("rasters", "3hi.tif"))
+hi4 <- raster(here::here("rasters", "4hi.tif"))
+hi5 <- raster(here::here("rasters", "5hi.tif"))
+hi6 <- raster(here::here("rasters", "6hi.tif"))
+hi7 <- raster(here::here("rasters", "7hi.tif"))
+hi8 <- raster(here::here("rasters", "8hi.tif"))
+hi9 <- raster(here::here("rasters", "9hi.tif"))
+hi10 <- raster(here::here("rasters", "10hi.tif"))
+hi11 <- raster(here::here("rasters", "11hi.tif"))
+hi12 <- raster(here::here("rasters", "12hi.tif"))
+hi13 <- raster(here::here("rasters", "13hi.tif"))
+hi14 <- raster(here::here("rasters", "14hi.tif"))
+hi15 <- raster(here::here("rasters", "15hi.tif"))
+hi16 <- raster(here::here("rasters", "16hi.tif"))
+hi17 <- raster(here::here("rasters", "17hi.tif"))
+hi18 <- raster(here::here("rasters", "18hi.tif"))
+hi19 <- raster(here::here("rasters", "19hi.tif"))
+hi20 <- raster(here::here("rasters", "20hi.tif"))
+hi21 <- raster(here::here("rasters", "21hi.tif"))
+hi22 <- raster(here::here("rasters", "22hi.tif"))
+hi23 <- raster(here::here("rasters", "23hi.tif"))
+hi24 <- raster(here::here("rasters", "24hi.tif"))
+hi25 <- raster(here::here("rasters", "25hi.tif"))
+hi26 <- raster(here::here("rasters", "26hi.tif"))
+
+#hard code low rasters
+low1 <- raster(here::here("rasters", "1low.tif"))
+low2 <- raster(here::here("rasters", "2low.tif"))
+low3 <- raster(here::here("rasters", "3low.tif"))
+low4 <- raster(here::here("rasters", "4low.tif"))
+low5 <- raster(here::here("rasters", "5low.tif"))
+low6 <- raster(here::here("rasters", "6low.tif"))
+low7 <- raster(here::here("rasters", "7low.tif"))
+low8 <- raster(here::here("rasters", "8low.tif"))
+low9 <- raster(here::here("rasters", "9low.tif"))
+low10 <- raster(here::here("rasters", "10low.tif"))
+low11 <- raster(here::here("rasters", "11low.tif"))
+low12 <- raster(here::here("rasters", "12low.tif"))
+low13 <- raster(here::here("rasters", "13low.tif"))
+low14 <- raster(here::here("rasters", "14low.tif"))
+low15 <- raster(here::here("rasters", "15low.tif"))
+low16 <- raster(here::here("rasters", "16low.tif"))
+low17 <- raster(here::here("rasters", "17low.tif"))
+low18 <- raster(here::here("rasters", "18low.tif"))
+low19 <- raster(here::here("rasters", "19low.tif"))
+low20 <- raster(here::here("rasters", "20low.tif"))
+low21 <- raster(here::here("rasters", "21low.tif"))
+low22 <- raster(here::here("rasters", "22low.tif"))
+low23 <- raster(here::here("rasters", "23low.tif"))
+low24 <- raster(here::here("rasters", "24low.tif"))
+low25 <- raster(here::here("rasters", "25low.tif"))
+low26 <- raster(here::here("rasters", "26low.tif"))
+```
+
+## Calculate gradients and flow values from points
+```{r}
+#calc latitudes to measure gradients in each direction
+library(dplyr)
+slice <- (ymax(hi1) - ymin(hi1))/5
+west <- matrix(6,2) %>% as.data.frame()
+west[1,1] <- ymin(hi1)
+west[2,1] <- ymin(hi1) + slice
+west[3,1] <- ymin(hi1) + slice*2
+west[4,1] <- ymin(hi1) + slice*3
+west[5,1] <- ymin(hi1) + slice*4
+west[6,1] <- ymin(hi1) + slice*5 -0.00005
+
+#calc longitudes for WEST
+west[1:6,2] <- c(-121.382641, -121.384493, -121.386668, -121.387100, -121.386220, -121.385187)
+
+#calc longitudes for EAST
+east <- west
+east[1:6,2] <- c(-121.380560, -121.380811, -121.383207, -121.381255, -121.378253, -121.3759)
+
+west10 <- west
+west10[1:6,2] <- west10[1:6,2]+0.00115
+east10 <- east
+east10[1:6,2] <- east10[1:6,2]-0.00115
+
+#remove rownames
+rownames(east) <- c()
+colnames(east) <- c()
+east
+```
+
+# NEW
+```{r}
+# create ll crs object
+ll <- crs("+init=epsg:4269 +proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs +towgs84=0,0,0")
+
+# set crs of raster
+crs(hi1) <- ll
+
+
+# visualize
+plot(hi1)
+points(spdf_e, pch = 19, cex = 0.1)
+
+
+# set up df to input water levels
+grads <- as.data.frame(matrix(nrow=26, ncol=3))
+colnames(grads) <- c("raster", "egrad", "wgrad")
+
+popgrads <- function(rast, gradname) {
+  
+  # set crs of raster
+crs(rast) <- ll
+
+# visualize
+plot(rast)
+points(spdf_e, pch = 19, cex = 0.1)
+  # create spdf and set crs EAST
+  spdf_e <- SpatialPoints(coords = east[, 2:1],  # lat and long are flipped
+                      proj4string = ll)      # define crs
+
+  # extract
+spdf_e <- raster::extract(rast,       # from
+                        spdf_e,      # to
+                        sp = TRUE) # returns extracted values to spdf
+
+
+# create spdf and set crs EAST10
+spdf_e10 <- SpatialPoints(coords = east10[, 2:1],  # lat and long are flipped
+                      proj4string = ll)      # define crs
+
+
+# extract
+spdf_e10 <- raster::extract(rast,       # from
+                        spdf_e10,      # to
+                        sp = TRUE) # returns extracted values to spdf
+
+
+# # create spdf and set crs WEST10
+spdf_w10 <- SpatialPoints(coords = west10[, 2:1],  # lat and long are flipped
+                      proj4string = ll)      # define crs
+# extract
+spdf_w10<- raster::extract(rast,       # from
+                        spdf_w10,      # to
+                        sp = TRUE) # returns extracted values to spdf
+
+
+# # create spdf and set crs WEST
+spdf_w <- SpatialPoints(coords = west[, 2:1],  # lat and long are flipped
+                      proj4string = ll)      # define crs
+# extract
+spdf_w <- raster::extract(rast,       # from
+                        spdf_w,      # to
+                        sp = TRUE) # returns extracted values to spdf
+
+all <- cbind(spdf_e@data, spdf_e10@data, spdf_w@data, spdf_w10@data)
+colnames(all) <- c("E", "E10", "W", "W10")
+egrad <- (mean(all$E10-all$E))/100
+wgrad <- (mean(all$W10-all$W))/100
+
+grads[1,] <- c(gradname, egrad, wgrad)
+return(grads)
+}
+popgrads(rast = low5, gradname = "hi26")
+```
+
+```{r test}
+ # create spdf and set crs EAST
+  spdf_e <- SpatialPoints(coords = east[, 2:1],  # lat and long are flipped
+                      proj4string = ll)      # define crs
+
+  # extract
+spdf_e <- raster::extract(hi18,       # from
+                        spdf_e,      # to
+                        sp = TRUE) # returns extracted values to spdf
+
+
+# create spdf and set crs EAST10
+spdf_e10 <- SpatialPoints(coords = east10[, 2:1],  # lat and long are flipped
+                      proj4string = ll)      # define crs
+
+
+# extract
+spdf_e10 <- raster::extract(hi18,       # from
+                        spdf_e10,      # to
+                        sp = TRUE) # returns extracted values to spdf
+spdf_e10@data
+spdf_e@data
+
+plot(hi18)
+points(spdf_e, pch = 19, cex = 0.1)
+
+```
+
+## Extract water levels at each point 
+```{r}
+elevel <- as.data.frame(matrix(nrow=6,ncol=2))
+for (i in 1:6) {
+elevel[i,1] <- na.omit(extract(hi1, t(as.matrix(east[i,]))))
+elevel[i,2] <- na.omit(extract(hi1, t(as.matrix(east10[i,]))))
+}
+```
+
+## Returns plots of trimmed rasters, need to update lat fxn to also extract values, or just write rasters
+```{r}
+source(here::here("rech_lat_fxn2.R"))
+begin <- read.csv(here::here("data", "ev1h.csv"))
+end <- read.csv(here::here("data", "ev1l.csv"))
+rechvol_lat(begin = begin, end = end, r_begin=as.character(names_hi[1]), r_end = as.character(names_low[1]))
+
+
+```
