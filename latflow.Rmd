@@ -260,3 +260,31 @@ rechvol_lat(begin = begin, end = end, r_begin=as.character(names_hi[1]), r_end =
 
 
 ```
+
+```{r}
+gdata <- read.csv(here::here("data", "grads.csv"))
+
+latcalc <- function(grad, K, thick, length) {
+  Q <- K*grad*(thick*length)
+  return(Q)
+}
+Kh=5.4
+westQ_hi <- latcalc(grad=mean(gdata[1:3,3]), K = Kh, thick = 2.814, length = 2418) #m^3/day
+westQ_lo <- latcalc(grad=mean(gdata[4:6,3]), K = Kh, thick = 2.814, length = 2418)
+eastQ_hi <- latcalc(grad=mean(gdata[1:3,2]), K = Kh, thick = 2.814, length = 2593)
+eastQ_lo <- latcalc(grad=mean(gdata[4:6,2]), K = Kh, thick = 2.814, length = 2593)
+latQ <- data.frame(matrix(nrow=7, ncol = 3))
+colnames(latQ) <- c("ID", "East", "West")
+
+latQ[7, ] <- c('Mean', mean(eastQ_hi, eastQ_lo), mean(westQ_hi, westQ_lo))
+latQ[1:6,1] <- as.character(gdata[,1])
+for (v in 1:6) { #this is for east, second column
+  latQ[v, 2] <- latcalc(grad=gdata[v,2], K = Kh, thick = 2.814, length = 2593)
+}
+for (v in 1:6) { #this is for west, third column, diff length
+  latQ[v,3] <- latcalc(grad=gdata[v,3], K = Kh, thick = 2.814, length = 2418)
+}
+latQ$East <- as.numeric(as.character(latQ$East))
+latQ$West <- as.numeric(as.character(latQ$West))
+kable(latQ, format = 'latex', digits = 1, align = 'c') %>% kable_styling(position = "center")
+```
