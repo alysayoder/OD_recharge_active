@@ -68,25 +68,23 @@ lapply(packages, library, character.only=T)
   gridded(event_clip) <- TRUE
   event_rast <- raster(event_clip, "z")
   
-  # #plot heatmap
-  # plot(event_rast, main = plot_title)
-  # plot(begin, add= TRUE)
-  
+
   library(rasterVis)
 # plot with better scale 
-
-  par(mfcol=(c(1,2)))
-  plot(event_rast, col = rev(bpy.colors(length(seq(-1,8, by =1))-1)), breaks = seq(-1,8, by = 1),
+# scale needs to be -1 to 8 when plotting events
+# scale is 0 to 11 when plotting WY recharge
+  par(mfcol=c(1,2)) #this is to get rid of padding around the raster
+  plot(event_rast, col = rev(bpy.colors(length(seq(0,11, by =1))-1)), breaks = seq(0,11, by = 1),
        legend.args=list(text=expression(paste(Delta, ' Groundwater Elevation (m)')), side=4, font=6, line=2.5, cex=1),
        xlab = 'Longitude', ylab = 'Latitude')
  
   # calculate area per cell 
-  m2_cell_idw <- area/ncell(event_rast)
+  m2_cell_idw <- 1739235/3746
   m2_cell_idw <- as.numeric(m2_cell_idw)
   
   # m3 per cell
-  m3percell_idw <- m2_cell_idw * event_rast
-  totm3_idw <- cellStats(m3percell_idw, "sum")
+  m3_idw <- m2_cell_idw * event_rast
+  totm3_idw <- cellStats(m3_idw, "sum")
   
   # apply Sy range
   lowIDW <- totm3_idw*0.07

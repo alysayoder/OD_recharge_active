@@ -53,21 +53,43 @@ for (row in 1:nrow(WYtf)) {
 colnames(QdatWY) <- c("WY", "Integrated Discharge m^3")
 kable(QdatWY)
 ```
+## Get Groundwater Level Data
+```{r}
 
+adata <- read.csv(here::here('data', 'allsets.csv'))
+adata <- adata[-c(1,3,15,17:31)] #removing index numbers, MW-13, Oneto-Ag (confined), and Nathan's text 
+```
 #Generate WY Change in Head Rasters
 ```{r}
-## Create df with total discharge vol for each WY recharge term
 #call functions from 'event_compare.Rmd' 
 source("rech_fxn.R")
-source("evsub_fxn.R")
-WY <- seq(2014,2017,1)
-QdatWY <- data.frame(WY) # event number in event_pre corresponds to the row numbers in Qdat. 
-
-for (row in 1:nrow(WYtf)) {
- QdatWY[row, 2] <- rechvol(begin = evsub(WYtf[row,2], end = WYtf[row,3]), plot_title = "test")
+source("rechcalc_gwl_format.R")
+#make list of start and end date
+Start <- list()
+End <- list()
+#for loop to format data for rechvol
+for (n in 1:nrow(WYtf)) {
+  Start[[n]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, 
+    Date == as.character(WYtf$Start[n])))))
+  End[[n]] <- rechcalc_gwl_format(as.data.frame(t(subset(adata, 
+    Date == as.character(WYtf$End[n])))))
 }
 
+WYrech <- matrix(nrow = 4, ncol = 2)
+WYrech <- as.data.frame(WYrech)
+EventID_WY <- seq(1,4,1)
+WYrech[,1] <- EventID_WY
 
+for (ev in 1:nrow(WYtf)) {
+ WYrech[ev,2] <- rechvol(begin = Start[[ev]], end = End[[ev]], plot_title = "Water Year Recharge Events")
+}
+
+colnames(WYrech) <- c("Event ID", "Recharge Volume (m3)")
+kable(WYrech, format = "markdown")
+
+#test to find area of clipped raster
+toad <- raster(here::here("latflow_rasters", "1hi.tif"))
+proj4string(toad)<- CRS("+proj=longlat +datum=WGS84")
 ```
 
 ## Recharge Vol per Integrated Discharge Vol
