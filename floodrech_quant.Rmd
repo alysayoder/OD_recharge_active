@@ -23,7 +23,7 @@ p <- ggplot(clipd, aes(x=WY, y=MidRecharge)) +
   geom_errorbar(aes(ymin=MinRecharge, ymax=MaxRecharge), width=.2) + 
   xlab('Water Year') +
   ylab('Recharge'~(m^3)) +
-  ggtitle('Estimated Recharge at Oneto-Denier') + 
+ #ggtitle('Estimated Recharge at Oneto-Denier') + 
   theme_minimal()
 p #plotting the clipped recharge estimates, before removing any recharge occurring past the pre/post threshold
 

@@ -22,8 +22,8 @@ lapply(packages, library, character.only=T)
   #deal with NA vals
   #complete.cases selects only the rows that are complete, eliminating all rows containing NA values
   #need to also do this in formatting function.. somehow
-  # begin <- begin[complete.cases(begin), ]
-  # end <- end[complete.cases(end), ]
+  begin <- begin[complete.cases(begin), ]
+  end <- end[complete.cases(end), ]
   
   # define coordinate system
   coordinates(begin) <- ~ long + lat
@@ -46,7 +46,7 @@ lapply(packages, library, character.only=T)
   #plot(idw_begin, main = "Start")
   
   # subtract to find net water levels throughout the event
-  event_vol <- abs(idw_end-idw_begin)
+  event_vol <- (idw_end-idw_begin)
   
   # import outline of boundary, as a set of points in lat/long that we generated in ArcMap as a digitized polyline
   bound <- read.csv(here::here("data", "bound_table.csv"), stringsAsFactors = FALSE, header = TRUE)
@@ -63,22 +63,23 @@ lapply(packages, library, character.only=T)
   event_clip <- temp[inout(event_pts, bound_pts), ]
   colnames(event_clip) <- c('x','y','z')
   
-  # plot idwevent_clip as a heatmap
-  library(viridis)
-  library(magrittr)
-  event_clip %>% 
-    ggplot() +
-    geom_tile(aes(x,y, fill = z)) +
-    coord_fixed(1) +
-    scale_fill_viridis(name="Event Recharged Head (m)") +
-    theme_void()
   
   coordinates(event_clip) <- ~ x + y
   gridded(event_clip) <- TRUE
   event_rast <- raster(event_clip, "z")
-  plot(event_rast, main = plot_title)
-  plot(begin, add= TRUE)
   
+  # #plot heatmap
+  # plot(event_rast, main = plot_title)
+  # plot(begin, add= TRUE)
+  
+  library(rasterVis)
+# plot with better scale 
+
+  par(mfcol=(c(1,2)))
+  plot(event_rast, col = rev(bpy.colors(length(seq(-1,8, by =1))-1)), breaks = seq(-1,8, by = 1),
+       legend.args=list(text=expression(paste(Delta, ' Groundwater Elevation (m)')), side=4, font=6, line=2.5, cex=1),
+       xlab = 'Longitude', ylab = 'Latitude')
+ 
   # calculate area per cell 
   m2_cell_idw <- area/ncell(event_rast)
   m2_cell_idw <- as.numeric(m2_cell_idw)

@@ -54,6 +54,22 @@ colnames(QdatWY) <- c("WY", "Integrated Discharge m^3")
 kable(QdatWY)
 ```
 
+#Generate WY Change in Head Rasters
+```{r}
+## Create df with total discharge vol for each WY recharge term
+#call functions from 'event_compare.Rmd' 
+source("rech_fxn.R")
+source("evsub_fxn.R")
+WY <- seq(2014,2017,1)
+QdatWY <- data.frame(WY) # event number in event_pre corresponds to the row numbers in Qdat. 
+
+for (row in 1:nrow(WYtf)) {
+ QdatWY[row, 2] <- rechvol(begin = evsub(WYtf[row,2], end = WYtf[row,3]), plot_title = "test")
+}
+
+
+```
+
 ## Recharge Vol per Integrated Discharge Vol
 ```{r}
 rech <- read.csv(here::here("data", "clipped_2014_17_rechargeVols.csv"), header = TRUE, sep = ",")
