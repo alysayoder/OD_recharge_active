@@ -230,25 +230,27 @@ rech$ld <- round(rech$ld, digits = 1)
 library(plotly)
 width = as.vector.factor(rech$Length*100)
 t <- plot_ly(rech) %>%
-  add_trace(x=mb$Date, y=mb$MiBarCMS, type = "scatter", mode = "lines", name="Discharge (cms)", yaxis="y2",
+  add_trace(x=mb$Date, y=mb$MiBarCMS, type = "scatter", mode = "lines", name="Michigan Bar Discharge (cms)", yaxis="y2",
             line = list(color = '#45171D', width = 0.5))%>% 
   add_trace(x = rech$Start[1:7], y = rech$`Recharge Volume (m3)`[1:7], type ='bar', 
-             name = "pre levee removal", marker = list(color = "#43a2ca"), 
+             name = "Pre-Restoration Recharge Event", marker = list(color = "#43a2ca"), 
             hoverinfo = 'text', text = ~paste(rech$ld[1:7], 'days'), width = width[1:7]) %>%
   add_trace(x = rech$Start[8:26], y=rech$`Recharge Volume (m3)`[8:26], type = 'bar',
-            name = "post levee removal", marker = list(color= "#a8ddb5"), 
+            name = "Post-Restoration Recharge Event", marker = list(color= "#a8ddb5"), 
             hoverinfo = 'text', text = ~paste(rech$ld[8:26], 'days'), width = width[8:26]) %>%
-  rangeslider() %>%
+  #rangeslider() %>%
   layout(
     hovermode = 'compare',
-    title = "Recharge Volume of Each Event",
+    #title = "Recharge Volume of Each Event",
     xaxis = list(title = 'Time', zeroline = FALSE),
-    yaxis = list(title = 'Recharge Volume (m3)', showgrid = FALSE, zeroline = FALSE),
-    yaxis2 = list(side = 'right', overlaying = 'y', title ='Discharge (cms)', showgrid = FALSE, zeroline = FALSE))
-   # legend = list(x=0.1, y = 0.9))
+    yaxis = list(title = "Recharge Volume (m3)", showgrid = FALSE, zeroline = FALSE),
+    yaxis2 = list(side = 'right', overlaying = "y", title ='Discharge (cms)', showgrid = FALSE, zeroline = FALSE),
+   legend = list(x=0.1, y = 0.9),
+   margin = list(l=80, r=80, b = 80), 
+   font = list(
+     size = 18
+   ))
 t
-#need to look at these results relative to MB hydrograph
-
 ```
 
 # Additional Recharge Event Volume Plots
@@ -332,7 +334,7 @@ library(here)
 ggsave(here::here("rech_vs_discharge_95.pdf"), device = "pdf", width=11, height=8)
 ```
 
-## bin data points to small, med and large recharge events
+## bin data points to with and without floodplain inundation
 ```{r}
 
 

@@ -41,9 +41,47 @@ grid.arrange(p1, p2, ncol =2)
 # dev.off()
 ```
 
+##Discharge and Precip Hydrographs for Each Wy
+```{r}
+library(here)
+#change filename to plot different data sets
+wy13 <- read.csv(here::here("data", "MI_bar_Precip_WY2017.csv"))
+wy13$Date <- as.POSIXct(wy13$Date, format =" %m/%d/%Y")
+#getting ideas from https://rpubs.com/cxiao/hydrograph-ggplot2-plot
+library(ggplot2)
+library(gridExtra)
+library(grid)
+#set up precip portion of plot
+p1 <- ggplot(wy13, aes(Date, Precip.m)) +
+  geom_bar(stat = 'identity', fill = "black")+
+  theme_bw() +
+  ylab("Precip. (m)") +
+  scale_y_reverse()+
+  theme(axis.title.x    = element_blank(),
+        axis.text.x     = element_blank(),
+        axis.ticks.x    = element_blank(),
+        plot.margin = margin(r=10, l = 10, b = 0, t = 10),
+        axis.title.y = element_text(margin = margin(t=0,r=10,b=0,l=0)))
+
+#set up flow portion of plot
+p2 <- ggplot(wy13, aes(Date, Discharge.cms)) + 
+  geom_line(colour = "blue")+
+  ylab("Streamflow (cms)")+
+  theme_bw() +
+  theme(plot.margin=margin(r=10,l=10, t = 0, b = 10),
+        axis.title.y = element_text(margin = margin(t=0,r=10,b=0,l=0)))
+
+#combine and arrange plots
+p1 <- ggplot_gtable(ggplot_build(p1))
+p2 <- ggplot_gtable(ggplot_build(p2))
+p1$widths <- p2$widths
+grid.arrange(p1,p2,ncol=1,heights = c(1,3))
+          
+```
+
 ##Plotly surface plot of the max and min water levels of a recharge event
 ```{r}
 library(plotly)
-
+#refer to yeah_rech_visuals3d.Rmd
 
 ```
