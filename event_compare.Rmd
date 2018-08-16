@@ -310,6 +310,7 @@ library(devtools)
 library(ggplot2)
 devtools::source_gist("524eade46135f6348140", filename = "ggplot_smooth_func.R")
 ggplot(agree,aes(colour=factor(prevpost))) + 
+  
   geom_point(aes(x=agree$Cumul.Dis, y=agree$RechVol)) +
  scale_y_log10()+
   scale_x_log10()+
@@ -321,25 +322,41 @@ ggplot(agree,aes(colour=factor(prevpost))) +
   scale_colour_discrete(name="Levee Removal Status", 
                         breaks=c(2,1),
                         labels=c("Pre-Removal", "Post-Removal")) +
-  #labs(title = "Recharge Volume vs. Cumulative Discharge", 
-       #subtitle="Throughout Each Recharge Event, 2013-2017") +
+  #labs(title = "Recharge Volume vs. Cumulative Discharge",
+ # subtitle="Throughout Each Recharge Event, 2013-2017") +
        xlab(bquote('Cumulative Discharge ('~m^3~') (log)')) +
        ylab(bquote('Recharge Volume ('~m^3~') (log)')) +
   theme(legend.position = "right")
-  # stat_smooth_func(data= agree[1:7,], aes(x=agree$Cumul.Dis[1:7], y=agree$RechVol[1:7]),
-  #                  geom="text", method="lm", hjust=0,parse=TRUE) +
-  # stat_smooth_func(data=agree[8:26,], aes(x=agree$Cumul.Dis[8:26], y=agree$RechVol[8:26]),
-  #                  geom="text", method="lm", hjust=0, parse=TRUE)
+
+
+# +
+#   stat_smooth_func(data= agree[1:7,], aes(x=agree$Cumul.Dis[1:7], y=agree$RechVol[1:7]),
+#                    geom="text", method="lm", hjust=0,parse=TRUE) +
+#   stat_smooth_func(data=agree[8:26,], aes(x=agree$Cumul.Dis[8:26], y=agree$RechVol[8:26]),
+#                    geom="text", method="lm", hjust=0, parse=TRUE)
+
 library(here)
 ggsave(here::here("rech_vs_discharge_95.pdf"), device = "pdf", width=11, height=8)
+
+
 ```
 
-## bin data points to with and without floodplain inundation
+
+
+## other dfs that haven't been used yet 
 ```{r}
+agree$flood <- c(FALSE, TRUE, NA, TRUE, 
+                 FALSE, FALSE, FALSE, TRUE, 
+                 TRUE, TRUE, TRUE, TRUE, 
+                 TRUE, TRUE, FALSE, TRUE, 
+                 FALSE, TRUE, TRUE, TRUE, 
+                 TRUE, TRUE, TRUE, TRUE,
+                 TRUE, TRUE)
+agree_fl <- subset(agree, flood == TRUE) #create separate dfs, one flood one dry 
+agree_dry <- subset(agree, flood ==FALSE)
 
-
-
-
+agree_pf <- agree
+agree_pf <- agree_pf[-c(15,17),] #this is a df with the tiny post-removal river recharge events removed
 ```
 
 ## determine the actual difference in recharge volumes between the pre line and the post line
@@ -348,12 +365,12 @@ ggsave(here::here("rech_vs_discharge_95.pdf"), device = "pdf", width=11, height=
 #in excel, I found that the best fit is the power model 
 #x and y equations shown below
 post_y <- function(x) {
-  post_y = 19.068*(x^0.4264)
+  post_y = 10.365*(x^0.4267)
     return(post_y)
 }
 
 pre_y <- function(x) {
-  pre_y = 0.9145*x^0.5411
+  pre_y = 1.2704*x^0.5039
   return(pre_y)
 }
 lodif <- post_y(138472068) - pre_y(138472068)
@@ -363,6 +380,8 @@ shape <- readOGR(dsn = here::here("rasters"), layer = "trim")
 shape2 <-  readOGR(dsn = here::here("rasters"), layer = "trimpoly")
 rast <- raster(here::here("rasters", "x.tif"))
 polyarea <- areaPolygon(shape2)
+lodif
+hidif
 ```
 
 

@@ -36,3 +36,27 @@ library(dplyr)
 kable(wyrech, format = "latex", caption = "toad is cute") %>%
   column_spec(1:5, width = "3cm")
 ```
+
+##Recharge Event Volumes, Cumulative Dis, Inundation Status
+```{r}
+library(knitr)
+library(kableExtra)
+
+rechparam <- agree[,c(1:2,4,6)]
+
+is.num <- sapply(rechparam, is.numeric)
+rechparam[is.num] <- lapply(rechparam[is.num], round, 2)
+
+
+
+kable(rechparam, format = "latex")
+
+```
+
+##Precip Table
+```{r}
+precip <- read.csv(here::here("thesis_data", "precip.csv"))
+precip <- precip[,c(1,5,6)]
+kable(precip, format = "markdown")
+
+```
